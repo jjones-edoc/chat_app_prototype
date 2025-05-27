@@ -71,28 +71,51 @@ const ChatView = {
   },
 
   renderConversationsList() {
-    return AppStore.conversations.map(conv => `
-      <div class="conversation-item ${conv.id === AppStore.selectedConversationId ? 'active' : ''}" 
-           onclick="ChatView.selectConversation(${conv.id})">
-        <div class="d-flex align-items-center">
-          <div class="conversation-avatar ${conv.participants[0].avatarClass}">
-            ${conv.participants.length > 2 ? ChatView.getOwnerDesignation(conv.ownerId) : conv.participants[0].initials}
-          </div>
-          <div class="conversation-info">
-            <div class="conversation-header">
-              <div class="conversation-name">${conv.name}</div>
-              <div class="conversation-time">${conv.lastActivity}</div>
+    return AppStore.conversations.map(conv => {
+      // Determine avatar style based on ownership
+      let avatarClass, avatarContent, ownerTooltip;
+      
+      if (conv.participants.length > 2) {
+        // Multi-participant conversation - show owner designation
+        avatarContent = this.getOwnerDesignation(conv);
+        ownerTooltip = this.getOwnerTooltip(conv);
+        if (conv.ownerType === 'group') {
+          avatarClass = 'avatar-group';
+        } else {
+          // Use current user's avatar class if they own it, otherwise use default
+          avatarClass = conv.ownerId === AppStore.currentUser.id ? 
+            AppStore.currentUser.avatarClass : 'avatar-blue';
+        }
+      } else {
+        // Single participant conversation - use participant's avatar
+        avatarClass = conv.participants[0].avatarClass;
+        avatarContent = conv.participants[0].initials;
+        ownerTooltip = conv.participants[0].name;
+      }
+
+      return `
+        <div class="conversation-item ${conv.id === AppStore.selectedConversationId ? 'active' : ''}" 
+             onclick="ChatView.selectConversation(${conv.id})">
+          <div class="d-flex align-items-center">
+            <div class="conversation-avatar ${avatarClass}" title="${ownerTooltip}">
+              ${avatarContent}
             </div>
-            <div class="conversation-preview">${conv.lastMessage}</div>
+            <div class="conversation-info">
+              <div class="conversation-header">
+                <div class="conversation-name">${conv.name}</div>
+                <div class="conversation-time">${conv.lastActivity}</div>
+              </div>
+              <div class="conversation-preview">${conv.lastMessage}</div>
+            </div>
+            ${conv.unreadCount > 0 ? `<div class="unread-badge">${conv.unreadCount}</div>` : ''}
           </div>
-          ${conv.unreadCount > 0 ? `<div class="unread-badge">${conv.unreadCount}</div>` : ''}
         </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   },
 
   renderChatArea(conversation) {
-    const isOwner = conversation.ownerId === AppStore.currentUser.id;
+    const canManage = AppStore.canManageConversation(conversation.id);
     
     return `
       <div class="chat-header-info">
@@ -105,7 +128,7 @@ const ChatView = {
             </div>
           </div>
         </div>
-        ${isOwner ? `
+        ${canManage ? `
           <div class="chat-management">
             <button class="chat-menu-btn" onclick="ChatView.toggleChatMenu()">
               <i class="fas fa-ellipsis-v"></i>
@@ -661,24 +684,47 @@ ${AppStore.currentUser.name}
       conv.lastMessage.toLowerCase().includes(searchTerm)
     );
     
-    document.getElementById('conversationsList').innerHTML = filtered.map(conv => `
-      <div class="conversation-item ${conv.id === AppStore.selectedConversationId ? 'active' : ''}" 
-           onclick="ChatView.selectConversation(${conv.id})">
-        <div class="d-flex align-items-center">
-          <div class="conversation-avatar ${conv.participants[0].avatarClass}">
-            ${conv.participants.length > 2 ? ChatView.getOwnerDesignation(conv.ownerId) : conv.participants[0].initials}
-          </div>
-          <div class="conversation-info">
-            <div class="conversation-header">
-              <div class="conversation-name">${conv.name}</div>
-              <div class="conversation-time">${conv.lastActivity}</div>
+    document.getElementById('conversationsList').innerHTML = filtered.map(conv => {
+      // Determine avatar style based on ownership (same logic as renderConversationsList)
+      let avatarClass, avatarContent, ownerTooltip;
+      
+      if (conv.participants.length > 2) {
+        // Multi-participant conversation - show owner designation
+        avatarContent = this.getOwnerDesignation(conv);
+        ownerTooltip = this.getOwnerTooltip(conv);
+        if (conv.ownerType === 'group') {
+          avatarClass = 'avatar-group';
+        } else {
+          // Use current user's avatar class if they own it, otherwise use default
+          avatarClass = conv.ownerId === AppStore.currentUser.id ? 
+            AppStore.currentUser.avatarClass : 'avatar-blue';
+        }
+      } else {
+        // Single participant conversation - use participant's avatar
+        avatarClass = conv.participants[0].avatarClass;
+        avatarContent = conv.participants[0].initials;
+        ownerTooltip = conv.participants[0].name;
+      }
+
+      return `
+        <div class="conversation-item ${conv.id === AppStore.selectedConversationId ? 'active' : ''}" 
+             onclick="ChatView.selectConversation(${conv.id})">
+          <div class="d-flex align-items-center">
+            <div class="conversation-avatar ${avatarClass}" title="${ownerTooltip}">
+              ${avatarContent}
             </div>
-            <div class="conversation-preview">${conv.lastMessage}</div>
+            <div class="conversation-info">
+              <div class="conversation-header">
+                <div class="conversation-name">${conv.name}</div>
+                <div class="conversation-time">${conv.lastActivity}</div>
+              </div>
+              <div class="conversation-preview">${conv.lastMessage}</div>
+            </div>
+            ${conv.unreadCount > 0 ? `<div class="unread-badge">${conv.unreadCount}</div>` : ''}
           </div>
-          ${conv.unreadCount > 0 ? `<div class="unread-badge">${conv.unreadCount}</div>` : ''}
         </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   },
 
   scrollToBottom() {
@@ -745,26 +791,38 @@ ${AppStore.currentUser.name}
     // Implementation would go here to filter messages in the current conversation
   },
 
-  getOwnerDesignation(ownerId) {
-    // Map user roles to abbreviated designations
-    const roleMapping = {
-      'Senior Loan Officer': 'LO',
-      'Loan Officer': 'LO', 
-      'Business Loan Officer': 'LO',
-      'Underwriter': 'UW',
-      'Manager': 'MG',
-      'Processor': 'PR',
-      'Auto Loan Specialist': 'LS',
-      'Mortgage Specialist': 'MS'
-    };
-
-    // If it's the current user, use their role
-    if (ownerId === AppStore.currentUser.id) {
-      return roleMapping[AppStore.currentUser.role] || 'LO';
+  getOwnerDesignation(conversation) {
+    // Handle group ownership - show group abbreviation
+    if (conversation.ownerType === 'group') {
+      const groupMapping = {
+        'hr': 'HR',
+        'tellers': 'TL',
+        'loan_officers': 'LO'
+      };
+      return groupMapping[conversation.ownerId] || 'GP';
     }
 
-    // For other users, default to LO (Loan Officer) since most staff are loan officers
-    return 'LO';
+    // Handle individual ownership - show user initials
+    const ownerId = conversation.ownerId;
+    
+    // If it's the current user, use their initials
+    if (ownerId === AppStore.currentUser.id) {
+      return AppStore.currentUser.initials;
+    }
+
+    // For other users, look up their initials
+    const owner = AppStore.getUserById(ownerId);
+    if (owner && owner.initials) {
+      return owner.initials;
+    }
+
+    // Fallback - try to generate initials from name
+    if (owner && owner.name) {
+      return owner.name.split(' ').map(n => n[0]).join('').toUpperCase();
+    }
+
+    // Default fallback
+    return 'XX';
   },
 
   renderUserList() {
@@ -977,5 +1035,29 @@ ${AppStore.currentUser.name}
     });
     
     new bootstrap.Modal(document.getElementById('confirmationModal')).show();
+  },
+
+  getOwnerTooltip(conversation) {
+    // Handle group ownership
+    if (conversation.ownerType === 'group') {
+      return `Owned by ${conversation.ownerName || 'Unknown Group'} (Group)`;
+    }
+
+    // Handle individual ownership
+    const ownerId = conversation.ownerId;
+    
+    // If it's the current user
+    if (ownerId === AppStore.currentUser.id) {
+      return `Owned by ${AppStore.currentUser.name} (You)`;
+    }
+
+    // For other users, look up their name
+    const owner = AppStore.getUserById(ownerId);
+    if (owner) {
+      return `Owned by ${owner.name}`;
+    }
+
+    // Fallback
+    return 'Owner unknown';
   }
 };

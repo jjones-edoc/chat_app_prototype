@@ -74,6 +74,17 @@ body {
   font-size: 14px;
 }
 
+/* Chat ownership info */
+.chat-owner-info {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.chat-owner-info i {
+  color: var(--gray);
+}
+
 .header .logo {
   font-size: 1.3rem;
   font-weight: bold;

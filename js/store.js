@@ -8,99 +8,100 @@ const AppStore = {
     role: "Senior Loan Officer",
     initials: "DJ",
     avatarClass: "avatar-green",
-    isInternal: true
+    isInternal: true,
+    // For prototype: user belongs to all groups
+    groupMemberships: ['hr', 'tellers', 'loan_officers']
   },
 
   // Package data
   packages: [
     {
       id: 1,
-      name: "Jeff Johnson Loan Application",
+      name: "Personal Loan Application - Jeff Johnson",
       status: "Out For eSign",
       created: "05/21/2025",
       modified: "05/21/2025",
       owner: "D.JONES",
       type: "yellow",
       hasChats: true,
-      chatCount: 2
+      chatCount: 2,
+      applicant: "Jeff Johnson"
     },
     {
       id: 2,
-      name: "Sarah Miller Home Equity",
+      name: "Home Equity Line - Sarah Miller",
       status: "Reference",
       created: "05/21/2025",
       modified: "",
       owner: "D.JONES",
       type: "blue",
       hasChats: true,
-      chatCount: 1
+      chatCount: 1,
+      applicant: "Sarah Miller"
     },
     {
       id: 3,
-      name: "Robert Chen Auto Loan",
+      name: "Auto Loan - Robert Chen",
       status: "Reference",
       created: "05/21/2025",
       modified: "",
       owner: "D.JONES",
       type: "black",
       hasChats: false,
-      chatCount: 0
+      chatCount: 0,
+      applicant: "Robert Chen"
     },
     {
       id: 4,
-      name: "Emily Watson Mortgage Refi",
+      name: "Mortgage Refinance - Emily Watson",
       status: "Waiting for Doc",
       created: "04/23/2025",
       modified: "04/24/2025",
       owner: "D.JONES",
       type: "yellow",
       hasChats: true,
-      chatCount: 1
+      chatCount: 1,
+      applicant: "Emily Watson"
     },
     {
       id: 5,
-      name: "Michael Davis Business Loan",
+      name: "Business Loan - Michael Davis",
       status: "Ready To Sign",
       created: "04/23/2025",
       modified: "04/23/2025",
       owner: "D.JONES",
       type: "yellow",
       hasChats: false,
-      chatCount: 0
+      chatCount: 0,
+      applicant: "Michael Davis"
     }
   ],
 
-  // Package participants
+  // Package participants (external contacts are the loan applicants, internal users provide service)
   packageParticipants: {
     1: [ // Jeff Johnson Loan Application
-      { id: 1, name: "Jeff Johnson", email: "jeff.johnson@email.com", role: "Member", type: "external" },
+      { id: 1, name: "Jeff Johnson", email: "jeff.johnson@email.com", role: "Loan Applicant", type: "external" },
       { id: 2, name: "Sarah Johnson", email: "sarah.johnson@creditunion.com", role: "Loan Officer", type: "internal" },
-      { id: 3, name: "Mike Chen", email: "mike.chen@creditunion.com", role: "Underwriter", type: "internal" },
-      { id: 100, name: "David Jones", email: "david.jones@creditunion.com", role: "Senior Loan Officer", type: "internal" }
+      { id: 3, name: "Mike Chen", email: "mike.chen@creditunion.com", role: "Underwriter", type: "internal" }
     ],
     2: [ // Sarah Miller Home Equity
       { id: 4, name: "Sarah Miller", email: "sarah.miller@email.com", role: "Member", type: "external" },
-      { id: 5, name: "Lisa Rodriguez", email: "lisa.rodriguez@creditunion.com", role: "Loan Officer", type: "internal" },
-      { id: 6, name: "David Park", email: "david.park@creditunion.com", role: "Manager", type: "internal" },
-      { id: 100, name: "David Jones", email: "david.jones@creditunion.com", role: "Senior Loan Officer", type: "internal" }
+      { id: 5, name: "Lisa Rodriguez", email: "lisa.rodriguez@creditunion.com", role: "Loan Officer", type: "internal" }
     ],
     3: [ // Robert Chen Auto Loan
-      { id: 7, name: "Robert Chen", email: "robert.chen@email.com", role: "Member", type: "external" },
+      { id: 7, name: "Robert Chen", email: "robert.chen@email.com", role: "Auto Loan Applicant", type: "external" },
       { id: 8, name: "John Smith", email: "john.smith@creditunion.com", role: "Loan Officer", type: "internal" },
-      { id: 14, name: "Mary Garcia", email: "mary.garcia@creditunion.com", role: "Auto Loan Specialist", type: "internal" },
-      { id: 100, name: "David Jones", email: "david.jones@creditunion.com", role: "Senior Loan Officer", type: "internal" }
+      { id: 14, name: "Mary Garcia", email: "mary.garcia@creditunion.com", role: "Auto Loan Specialist", type: "internal" }
     ],
     4: [ // Emily Watson Mortgage Refi
-      { id: 9, name: "Emily Watson", email: "emily.watson@email.com", role: "Member", type: "external" },
+      { id: 9, name: "Emily Watson", email: "emily.watson@email.com", role: "Mortgage Applicant", type: "external" },
       { id: 10, name: "Amanda Brown", email: "amanda.brown@creditunion.com", role: "Loan Officer", type: "internal" },
-      { id: 15, name: "James Lee", email: "james.lee@creditunion.com", role: "Mortgage Specialist", type: "internal" },
-      { id: 100, name: "David Jones", email: "david.jones@creditunion.com", role: "Senior Loan Officer", type: "internal" }
+      { id: 15, name: "James Lee", email: "james.lee@creditunion.com", role: "Mortgage Specialist", type: "internal" }
     ],
     5: [ // Michael Davis Business Loan
       { id: 11, name: "Michael Davis", email: "michael.davis@email.com", role: "Business Owner", type: "external" },
       { id: 12, name: "Tom Wilson", email: "tom.wilson@creditunion.com", role: "Business Loan Officer", type: "internal" },
-      { id: 13, name: "Rachel Adams", email: "rachel.adams@creditunion.com", role: "Processor", type: "internal" },
-      { id: 100, name: "David Jones", email: "david.jones@creditunion.com", role: "Senior Loan Officer", type: "internal" }
+      { id: 13, name: "Rachel Adams", email: "rachel.adams@creditunion.com", role: "Processor", type: "internal" }
     ]
   },
 
@@ -110,7 +111,7 @@ const AppStore = {
       id: 101,
       name: "Jeff Johnson - Document Review",
       packageId: 1,
-      packageName: "Jeff Johnson Loan Application",
+      packageName: "Personal Loan Application - Jeff Johnson",
       participants: [
         { id: 1, name: "Jeff Johnson", type: "external", initials: "JJ", avatarClass: "avatar-blue" },
         { id: 2, name: "Sarah Johnson", type: "internal", initials: "SJ", avatarClass: "avatar-purple" },
@@ -127,7 +128,7 @@ const AppStore = {
       id: 102,
       name: "Jeff Johnson - Approval Process",
       packageId: 1,
-      packageName: "Jeff Johnson Loan Application",
+      packageName: "Personal Loan Application - Jeff Johnson",
       participants: [
         { id: 2, name: "Sarah Johnson", type: "internal", initials: "SJ", avatarClass: "avatar-purple" },
         { id: 3, name: "Mike Chen", type: "internal", initials: "MC", avatarClass: "avatar-orange" }
@@ -143,7 +144,7 @@ const AppStore = {
       id: 201,
       name: "Sarah Miller - Home Equity Questions",
       packageId: 2,
-      packageName: "Sarah Miller Home Equity",
+      packageName: "Home Equity Line - Sarah Miller",
       participants: [
         { id: 4, name: "Sarah Miller", type: "external", initials: "SM", avatarClass: "avatar-green" },
         { id: 5, name: "Lisa Rodriguez", type: "internal", initials: "LR", avatarClass: "avatar-blue" }
@@ -152,14 +153,16 @@ const AppStore = {
       lastMessage: "Next step is the home appraisal - I'll schedule that for you",
       hasNewMessages: true,
       unreadCount: 1,
-      ownerId: 100,
+      ownerId: 'loan_officers',
+      ownerType: 'group',
+      ownerName: 'Loan Officers',
       isActive: false
     },
     {
       id: 401,
       name: "Emily Watson - Refinance Discussion",
       packageId: 4,
-      packageName: "Emily Watson Mortgage Refi",
+      packageName: "Mortgage Refinance - Emily Watson",
       participants: [
         { id: 9, name: "Emily Watson", type: "external", initials: "EW", avatarClass: "avatar-orange" },
         { id: 10, name: "Amanda Brown", type: "internal", initials: "AB", avatarClass: "avatar-purple" }
@@ -474,22 +477,22 @@ const AppStore = {
 
   // All users (for individual assignment)
   allUsers: [
-    { id: 2, name: "Sarah Johnson", email: "sarah.johnson@creditunion.com", role: "Loan Officer", initials: "SJ", avatarClass: "avatar-purple" },
-    { id: 3, name: "Mike Chen", email: "mike.chen@creditunion.com", role: "Underwriter", initials: "MC", avatarClass: "avatar-orange" },
-    { id: 5, name: "Lisa Rodriguez", email: "lisa.rodriguez@creditunion.com", role: "Loan Officer", initials: "LR", avatarClass: "avatar-blue" },
-    { id: 6, name: "David Park", email: "david.park@creditunion.com", role: "Manager", initials: "DP", avatarClass: "avatar-green" },
-    { id: 8, name: "John Smith", email: "john.smith@creditunion.com", role: "Loan Officer", initials: "JS", avatarClass: "avatar-green" },
-    { id: 10, name: "Amanda Brown", email: "amanda.brown@creditunion.com", role: "Loan Officer", initials: "AB", avatarClass: "avatar-purple" },
-    { id: 12, name: "Tom Wilson", email: "tom.wilson@creditunion.com", role: "Business Loan Officer", initials: "TW", avatarClass: "avatar-orange" },
-    { id: 13, name: "Rachel Adams", email: "rachel.adams@creditunion.com", role: "Processor", initials: "RA", avatarClass: "avatar-blue" },
-    { id: 14, name: "Mary Garcia", email: "mary.garcia@creditunion.com", role: "Auto Loan Specialist", initials: "MG", avatarClass: "avatar-purple" },
-    { id: 15, name: "James Lee", email: "james.lee@creditunion.com", role: "Mortgage Specialist", initials: "JL", avatarClass: "avatar-orange" },
-    { id: 100, name: "David Jones", email: "david.jones@creditunion.com", role: "Senior Loan Officer", initials: "DJ", avatarClass: "avatar-green" },
-    { id: 201, name: "Jennifer Adams", email: "jennifer.adams@creditunion.com", role: "HR Manager", initials: "JA", avatarClass: "avatar-blue" },
-    { id: 202, name: "Mark Thompson", email: "mark.thompson@creditunion.com", role: "HR Specialist", initials: "MT", avatarClass: "avatar-purple" },
-    { id: 301, name: "Anna Davis", email: "anna.davis@creditunion.com", role: "Senior Teller", initials: "AD", avatarClass: "avatar-green" },
-    { id: 302, name: "Carlos Martinez", email: "carlos.martinez@creditunion.com", role: "Teller", initials: "CM", avatarClass: "avatar-orange" },
-    { id: 303, name: "Jessica Kim", email: "jessica.kim@creditunion.com", role: "Teller", initials: "JK", avatarClass: "avatar-blue" }
+    { id: 2, name: "Sarah Johnson", email: "sarah.johnson@creditunion.com", role: "Loan Officer", initials: "SJ", avatarClass: "avatar-purple", groupMemberships: ['loan_officers'] },
+    { id: 3, name: "Mike Chen", email: "mike.chen@creditunion.com", role: "Underwriter", initials: "MC", avatarClass: "avatar-orange", groupMemberships: ['loan_officers'] },
+    { id: 5, name: "Lisa Rodriguez", email: "lisa.rodriguez@creditunion.com", role: "Loan Officer", initials: "LR", avatarClass: "avatar-blue", groupMemberships: ['loan_officers'] },
+    { id: 6, name: "David Park", email: "david.park@creditunion.com", role: "Manager", initials: "DP", avatarClass: "avatar-green", groupMemberships: ['loan_officers'] },
+    { id: 8, name: "John Smith", email: "john.smith@creditunion.com", role: "Loan Officer", initials: "JS", avatarClass: "avatar-green", groupMemberships: ['loan_officers'] },
+    { id: 10, name: "Amanda Brown", email: "amanda.brown@creditunion.com", role: "Loan Officer", initials: "AB", avatarClass: "avatar-purple", groupMemberships: ['loan_officers'] },
+    { id: 12, name: "Tom Wilson", email: "tom.wilson@creditunion.com", role: "Business Loan Officer", initials: "TW", avatarClass: "avatar-orange", groupMemberships: ['loan_officers'] },
+    { id: 13, name: "Rachel Adams", email: "rachel.adams@creditunion.com", role: "Processor", initials: "RA", avatarClass: "avatar-blue", groupMemberships: ['loan_officers'] },
+    { id: 14, name: "Mary Garcia", email: "mary.garcia@creditunion.com", role: "Auto Loan Specialist", initials: "MG", avatarClass: "avatar-purple", groupMemberships: ['loan_officers'] },
+    { id: 15, name: "James Lee", email: "james.lee@creditunion.com", role: "Mortgage Specialist", initials: "JL", avatarClass: "avatar-orange", groupMemberships: ['loan_officers'] },
+    { id: 100, name: "David Jones", email: "david.jones@creditunion.com", role: "Senior Loan Officer", initials: "DJ", avatarClass: "avatar-green", groupMemberships: ['hr', 'tellers', 'loan_officers'] },
+    { id: 201, name: "Jennifer Adams", email: "jennifer.adams@creditunion.com", role: "HR Manager", initials: "JA", avatarClass: "avatar-blue", groupMemberships: ['hr'] },
+    { id: 202, name: "Mark Thompson", email: "mark.thompson@creditunion.com", role: "HR Specialist", initials: "MT", avatarClass: "avatar-purple", groupMemberships: ['hr'] },
+    { id: 301, name: "Anna Davis", email: "anna.davis@creditunion.com", role: "Senior Teller", initials: "AD", avatarClass: "avatar-green", groupMemberships: ['tellers'] },
+    { id: 302, name: "Carlos Martinez", email: "carlos.martinez@creditunion.com", role: "Teller", initials: "CM", avatarClass: "avatar-orange", groupMemberships: ['tellers'] },
+    { id: 303, name: "Jessica Kim", email: "jessica.kim@creditunion.com", role: "Teller", initials: "JK", avatarClass: "avatar-blue", groupMemberships: ['tellers'] }
   ],
 
   // Currently selected items
@@ -585,9 +588,15 @@ const AppStore = {
   transferOwnership(conversationId, assignee) {
     const conversation = this.getConversationById(conversationId);
     if (conversation) {
-      conversation.ownerId = assignee.id;
-      conversation.ownerName = assignee.name;
-      conversation.ownerType = assignee.type || 'user'; // 'user' or 'group'
+      if (assignee.type === 'group') {
+        conversation.ownerId = assignee.id;
+        conversation.ownerName = assignee.name;
+        conversation.ownerType = 'group';
+      } else {
+        conversation.ownerId = assignee.id;
+        conversation.ownerName = assignee.name;
+        conversation.ownerType = 'user';
+      }
       
       // Add system message about ownership transfer
       this.addMessage(conversationId, {
@@ -597,7 +606,7 @@ const AppStore = {
         sender: 'System',
         senderInitials: 'SYS',
         avatarClass: 'avatar-system',
-        content: `Conversation ownership transferred to ${assignee.name}`,
+        content: `Conversation ownership transferred to ${assignee.name}${assignee.type === 'group' ? ' (Group)' : ''}`,
         time: "just now",
         timestamp: new Date(),
         isOwn: false,
@@ -613,5 +622,27 @@ const AppStore = {
 
   getGroupById(id) {
     return this.groups.find(g => g.id === id);
+  },
+
+  canManageConversation(conversationId, userId = null) {
+    const user = userId ? this.getUserById(userId) : this.currentUser;
+    const conversation = this.getConversationById(conversationId);
+    
+    if (!conversation || !user) return false;
+    
+    // User owns the conversation directly
+    if (conversation.ownerId === user.id) {
+      return true;
+    }
+    
+    // Check if conversation is owned by a group the user belongs to
+    if (conversation.ownerType === 'group') {
+      const ownerGroup = this.getGroupById(conversation.ownerId);
+      if (ownerGroup && user.groupMemberships) {
+        return user.groupMemberships.includes(ownerGroup.id);
+      }
+    }
+    
+    return false;
   }
 };
