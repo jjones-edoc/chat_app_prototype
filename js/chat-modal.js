@@ -79,11 +79,16 @@ const ChatModal = {
               <div id="step2" class="step-content" style="display: none;">
                 <h6 class="mb-3">Add Participants</h6>
                 
-                <!-- Tabs for Users vs External Contacts -->
+                <!-- Tabs for Users vs Groups vs External Contacts -->
                 <ul class="nav nav-tabs mb-3" role="tablist">
                   <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users-panel" type="button">
-                      <i class="fas fa-users me-2"></i>Internal Users
+                      <i class="fas fa-user me-2"></i>Internal Users
+                    </button>
+                  </li>
+                  <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="groups-tab" data-bs-toggle="tab" data-bs-target="#groups-panel" type="button">
+                      <i class="fas fa-users me-2"></i>Groups
                     </button>
                   </li>
                   <li class="nav-item" role="presentation">
@@ -102,6 +107,16 @@ const ChatModal = {
                              onkeyup="ChatModal.filterParticipants('internal')" id="internalSearch" />
                     </div>
                     <div id="internalParticipantsList" style="max-height: 250px; overflow-y: auto;"></div>
+                  </div>
+
+                  <!-- Groups Panel -->
+                  <div class="tab-pane fade" id="groups-panel" role="tabpanel">
+                    <div class="search-box mb-3">
+                      <i class="fas fa-search"></i>
+                      <input type="text" class="form-control ps-5" placeholder="Search groups..." 
+                             onkeyup="ChatModal.filterParticipants('groups')" id="groupsSearch" />
+                    </div>
+                    <div id="groupsParticipantsList" style="max-height: 250px; overflow-y: auto;"></div>
                   </div>
 
                   <!-- External Contacts Panel -->
@@ -255,20 +270,11 @@ const ChatModal = {
   },
 
   loadAllParticipants() {
-    // Load internal users
-    const internalUsers = [
-      { id: 100, name: "David Jones", email: "david.jones@creditunion.com", role: "Senior Loan Officer", type: "internal" },
-      { id: 2, name: "Sarah Johnson", email: "sarah.johnson@creditunion.com", role: "Loan Officer", type: "internal" },
-      { id: 3, name: "Mike Chen", email: "mike.chen@creditunion.com", role: "Underwriter", type: "internal" },
-      { id: 5, name: "Lisa Rodriguez", email: "lisa.rodriguez@creditunion.com", role: "Loan Officer", type: "internal" },
-      { id: 6, name: "David Park", email: "david.park@creditunion.com", role: "Manager", type: "internal" },
-      { id: 8, name: "John Smith", email: "john.smith@creditunion.com", role: "Loan Officer", type: "internal" },
-      { id: 10, name: "Amanda Brown", email: "amanda.brown@creditunion.com", role: "Loan Officer", type: "internal" },
-      { id: 12, name: "Tom Wilson", email: "tom.wilson@creditunion.com", role: "Business Loan Officer", type: "internal" },
-      { id: 13, name: "Rachel Adams", email: "rachel.adams@creditunion.com", role: "Processor", type: "internal" },
-      { id: 14, name: "Mary Garcia", email: "mary.garcia@creditunion.com", role: "Auto Loan Specialist", type: "internal" },
-      { id: 15, name: "James Lee", email: "james.lee@creditunion.com", role: "Mortgage Specialist", type: "internal" }
-    ];
+    // Load internal users from the store
+    const internalUsers = AppStore.allUsers.filter(user => user.id !== AppStore.currentUser.id);
+
+    // Load groups from the store
+    const groups = AppStore.groups;
 
     // Load external contacts (package participants if package selected, otherwise all known external contacts)
     let externalContacts = [];
@@ -291,38 +297,71 @@ const ChatModal = {
 
     // Render lists
     this.renderParticipantsList(internalUsers, 'internal');
+    this.renderParticipantsList(groups, 'groups');
     this.renderParticipantsList(externalContacts, 'external');
     this.updateSelectedDisplay();
   },
 
   renderParticipantsList(participants, type) {
-    const listId = type === 'internal' ? 'internalParticipantsList' : 'externalParticipantsList';
+    const listIdMap = {
+      'internal': 'internalParticipantsList',
+      'groups': 'groupsParticipantsList',
+      'external': 'externalParticipantsList'
+    };
+    const listId = listIdMap[type];
     const list = document.getElementById(listId);
     
-    list.innerHTML = participants.map(participant => `
-      <div class="participant-item ${this.selectedParticipants.some(p => p.id === participant.id) ? 'selected' : ''}" 
-           onclick="ChatModal.toggleParticipant(${participant.id}, '${type}')" 
-           data-participant-id="${participant.id}"
-           data-participant-type="${type}">
-        <div class="d-flex align-items-center">
-          <div class="participant-avatar ${type === 'internal' ? 'avatar-blue' : 'avatar-green'}">
-            ${participant.name.split(' ').map(n => n[0]).join('')}
-          </div>
-          <div class="flex-grow-1">
-            <div class="fw-bold">${participant.name}</div>
-            <div class="text-muted small">${participant.email}</div>
-            <div class="small">
-              <span class="badge ${type === 'internal' ? 'bg-primary' : 'bg-secondary'}">${participant.role || 'External'}</span>
+    if (type === 'groups') {
+      list.innerHTML = participants.map(group => `
+        <div class="participant-item ${this.selectedParticipants.some(p => p.id === group.id && p.type === 'group') ? 'selected' : ''}" 
+             onclick="ChatModal.toggleParticipant('${group.id}', '${type}')" 
+             data-participant-id="${group.id}"
+             data-participant-type="${type}">
+          <div class="d-flex align-items-center">
+            <div class="participant-avatar avatar-group">
+              <i class="fas fa-users"></i>
+            </div>
+            <div class="flex-grow-1">
+              <div class="fw-bold">${group.name}</div>
+              <div class="text-muted small">${group.description}</div>
+              <div class="small">
+                <span class="badge bg-info">${group.members.length} members</span>
+              </div>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" 
+                     id="participant-${type}-${group.id}"
+                     ${this.selectedParticipants.some(p => p.id === group.id && p.type === 'group') ? 'checked' : ''}>
             </div>
           </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" 
-                   id="participant-${type}-${participant.id}"
-                   ${this.selectedParticipants.some(p => p.id === participant.id) ? 'checked' : ''}>
+        </div>
+      `).join('');
+    } else {
+      list.innerHTML = participants.map(participant => `
+        <div class="participant-item ${this.selectedParticipants.some(p => p.id === participant.id) ? 'selected' : ''}" 
+             onclick="ChatModal.toggleParticipant(${participant.id}, '${type}')" 
+             data-participant-id="${participant.id}"
+             data-participant-type="${type}">
+          <div class="d-flex align-items-center">
+            <div class="participant-avatar ${type === 'internal' ? (participant.avatarClass || 'avatar-blue') : 'avatar-green'}">
+              ${participant.initials || participant.name.split(' ').map(n => n[0]).join('')}
+            </div>
+            <div class="flex-grow-1">
+              <div class="fw-bold">${participant.name}</div>
+              <div class="text-muted small">${participant.email}</div>
+              <div class="small">
+                <span class="badge ${type === 'internal' ? 'bg-primary' : 'bg-secondary'}">${participant.role || 'External'}</span>
+              </div>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" 
+                     id="participant-${type}-${participant.id}"
+                     ${this.selectedParticipants.some(p => p.id === participant.id) ? 'checked' : ''}>
+            </div>
           </div>
         </div>
-      </div>
-    `).join('');
+      `).join('');
+    }
   },
 
   filterParticipants(type) {
@@ -341,20 +380,9 @@ const ChatModal = {
     // Get participant data
     let participant;
     if (type === 'internal') {
-      const internalUsers = [
-        { id: 100, name: "David Jones", email: "david.jones@creditunion.com", role: "Senior Loan Officer", type: "internal" },
-        { id: 2, name: "Sarah Johnson", email: "sarah.johnson@creditunion.com", role: "Loan Officer", type: "internal" },
-        { id: 3, name: "Mike Chen", email: "mike.chen@creditunion.com", role: "Underwriter", type: "internal" },
-        { id: 5, name: "Lisa Rodriguez", email: "lisa.rodriguez@creditunion.com", role: "Loan Officer", type: "internal" },
-        { id: 6, name: "David Park", email: "david.park@creditunion.com", role: "Manager", type: "internal" },
-        { id: 8, name: "John Smith", email: "john.smith@creditunion.com", role: "Loan Officer", type: "internal" },
-        { id: 10, name: "Amanda Brown", email: "amanda.brown@creditunion.com", role: "Loan Officer", type: "internal" },
-        { id: 12, name: "Tom Wilson", email: "tom.wilson@creditunion.com", role: "Business Loan Officer", type: "internal" },
-        { id: 13, name: "Rachel Adams", email: "rachel.adams@creditunion.com", role: "Processor", type: "internal" },
-        { id: 14, name: "Mary Garcia", email: "mary.garcia@creditunion.com", role: "Auto Loan Specialist", type: "internal" },
-        { id: 15, name: "James Lee", email: "james.lee@creditunion.com", role: "Mortgage Specialist", type: "internal" }
-      ];
-      participant = internalUsers.find(u => u.id === participantId);
+      participant = AppStore.getUserById(participantId);
+    } else if (type === 'groups') {
+      participant = AppStore.getGroupById(participantId);
     } else {
       // Find in package participants or external contacts
       if (this.selectedPackageId) {
@@ -375,22 +403,35 @@ const ChatModal = {
 
     if (!participant) return;
 
-    // Toggle selection
-    const index = this.selectedParticipants.findIndex(p => p.id === participantId);
+    // Toggle selection - need to handle groups differently
+    const index = this.selectedParticipants.findIndex(p => 
+      p.id === participantId && (type === 'groups' ? p.type === 'group' : true)
+    );
+    
     if (index > -1) {
       this.selectedParticipants.splice(index, 1);
     } else {
-      this.selectedParticipants.push({
-        id: participant.id,
-        name: participant.name,
-        type: participant.type,
-        email: participant.email,
-        role: participant.role,
-        initials: participant.name.split(' ').map(n => n[0]).join(''),
-        avatarClass: type === 'internal' ? 
-          ['avatar-blue', 'avatar-purple', 'avatar-orange', 'avatar-green'][Math.floor(Math.random() * 4)] :
-          ['avatar-green', 'avatar-blue', 'avatar-orange', 'avatar-purple'][Math.floor(Math.random() * 4)]
-      });
+      if (type === 'groups') {
+        this.selectedParticipants.push({
+          id: participant.id,
+          name: participant.name,
+          description: participant.description,
+          members: participant.members,
+          type: 'group'
+        });
+      } else {
+        this.selectedParticipants.push({
+          id: participant.id,
+          name: participant.name,
+          type: participant.type || type,
+          email: participant.email,
+          role: participant.role,
+          initials: participant.initials || participant.name.split(' ').map(n => n[0]).join(''),
+          avatarClass: participant.avatarClass || (type === 'internal' ? 
+            ['avatar-blue', 'avatar-purple', 'avatar-orange', 'avatar-green'][Math.floor(Math.random() * 4)] :
+            ['avatar-green', 'avatar-blue', 'avatar-orange', 'avatar-purple'][Math.floor(Math.random() * 4)])
+        });
+      }
     }
 
     // Update UI
@@ -412,19 +453,20 @@ const ChatModal = {
     } else {
       display.innerHTML = this.selectedParticipants.map(p => `
         <span class="badge bg-secondary d-flex align-items-center gap-1">
-          ${p.name}
+          <i class="fas fa-${p.type === 'group' ? 'users' : p.type === 'external' ? 'user-plus' : 'user'} me-1"></i>
+          ${p.name}${p.type === 'group' ? ` (${p.members.length} members)` : ''}
           <button type="button" class="btn-close btn-close-white btn-sm" 
-                  onclick="ChatModal.removeParticipant(${p.id})"
+                  onclick="ChatModal.removeParticipant('${p.id}', '${p.type}')"
                   style="font-size: 0.7rem;"></button>
         </span>
       `).join('');
     }
   },
 
-  removeParticipant(participantId) {
-    const participant = this.selectedParticipants.find(p => p.id === participantId);
+  removeParticipant(participantId, participantType) {
+    const participant = this.selectedParticipants.find(p => p.id === participantId && (participantType === 'group' ? p.type === 'group' : true));
     if (participant) {
-      this.toggleParticipant(participantId, participant.type);
+      this.toggleParticipant(participantId, participantType === 'group' ? 'groups' : participant.type);
     }
   },
 

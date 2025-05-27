@@ -982,21 +982,21 @@ body {
 }
 
 /* Add Participants Modal Styles */
-.internal-user-item {
+.internal-user-item, .group-item {
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.internal-user-item:hover {
+.internal-user-item:hover, .group-item:hover {
   background-color: #f8f9fa;
 }
 
-.internal-user-item.selected {
+.internal-user-item.selected, .group-item.selected {
   background-color: var(--primary-blue);
   color: white;
 }
 
-.internal-user-item.selected .text-muted {
+.internal-user-item.selected .text-muted, .group-item.selected .text-muted {
   color: rgba(255, 255, 255, 0.8) !important;
 }
 

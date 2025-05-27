@@ -297,7 +297,12 @@ const ChatView = {
               <ul class="nav nav-tabs mb-3" id="participantTabs" role="tablist">
                 <li class="nav-item" role="presentation">
                   <button class="nav-link active" id="internal-tab" data-bs-toggle="tab" data-bs-target="#internal-pane" type="button" role="tab" onclick="ChatView.switchToInternalTab()">
-                    <i class="fas fa-users me-2"></i>Internal Users
+                    <i class="fas fa-user me-2"></i>Internal Users
+                  </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="groups-tab" data-bs-toggle="tab" data-bs-target="#groups-pane" type="button" role="tab" onclick="ChatView.switchToGroupsTab()">
+                    <i class="fas fa-users me-2"></i>Groups
                   </button>
                 </li>
                 <li class="nav-item" role="presentation">
@@ -317,6 +322,17 @@ const ChatView = {
                   </div>
                   <div class="participant-list" id="internalUserList" style="max-height: 300px; overflow-y: auto;">
                     ${this.renderInternalUserList()}
+                  </div>
+                </div>
+
+                <!-- Groups Tab -->
+                <div class="tab-pane fade" id="groups-pane" role="tabpanel">
+                  <div class="search-box mb-3">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="form-control ps-5" id="groupSearch" placeholder="Search groups..." onkeyup="ChatView.filterGroups()">
+                  </div>
+                  <div class="participant-list" id="groupList" style="max-height: 300px; overflow-y: auto;">
+                    <!-- Groups will be loaded dynamically -->
                   </div>
                 </div>
 
@@ -403,8 +419,8 @@ const ChatView = {
                 <div class="tab-pane fade" id="groups-pane" role="tabpanel" aria-labelledby="groups-tab">
                   <div class="mb-3">
                     <label class="form-label">Select Group:</label>
-                    <div class="list-group" id="groupList">
-                      ${this.renderGroupList()}
+                    <div class="list-group" id="ownerGroupList">
+                      <!-- Groups will be loaded dynamically -->
                     </div>
                   </div>
                 </div>
@@ -510,11 +526,44 @@ const ChatView = {
   addToChat() {
     this.toggleChatMenu();
     this.selectedInternalUsers = [];
+    this.selectedGroups = [];
     this.selectedExternalUsers = [];
-    this.clearParticipantSelections();
-    document.getElementById('addParticipantsBtn').disabled = true;
-    document.getElementById('selectedParticipantsSection').style.display = 'none';
-    new bootstrap.Modal(document.getElementById('addParticipantsModal')).show();
+    
+    const modal = new bootstrap.Modal(document.getElementById('addParticipantsModal'));
+    modal.show();
+    
+    // Wait for modal to be shown, then initialize
+    setTimeout(() => {
+      this.clearParticipantSelections();
+      this.loadGroupList();
+      const btn = document.getElementById('addParticipantsBtn');
+      const section = document.getElementById('selectedParticipantsSection');
+      if (btn) btn.disabled = true;
+      if (section) section.style.display = 'none';
+    }, 100);
+  },
+
+  loadGroupList() {
+    const groupList = document.getElementById('groupList');
+    if (groupList) {
+      groupList.innerHTML = this.renderGroupList();
+      
+      // Remove existing event listeners to avoid duplicates
+      groupList.removeEventListener('click', this.groupClickHandler);
+      
+      // Create bound handler with explicit context
+      const chatViewRef = this;
+      this.groupClickHandler = function(e) {
+        const groupItem = e.target.closest('.group-item');
+        if (groupItem) {
+          const groupId = groupItem.getAttribute('data-group-id');
+          chatViewRef.selectGroup(groupId);
+        }
+      };
+      
+      // Add event delegation for group clicks
+      groupList.addEventListener('click', this.groupClickHandler);
+    }
   },
 
   attachToPackage() {
@@ -853,7 +902,7 @@ const ChatView = {
 
   renderGroupList() {
     return AppStore.groups.map(group => `
-      <div class="list-group-item list-group-item-action group-item" data-group-id="${group.id}" onclick="ChatView.selectGroup('${group.id}')">
+      <div class="list-group-item list-group-item-action group-item" data-group-id="${group.id}">
         <div class="d-flex align-items-center">
           <div class="participant-avatar avatar-group me-3">
             <i class="fas fa-users"></i>
@@ -866,6 +915,40 @@ const ChatView = {
         </div>
       </div>
     `).join('');
+  },
+
+  selectGroup(groupId) {
+    const groupItem = document.querySelector(`[data-group-id="${groupId}"]`);
+    const group = AppStore.getGroupById(groupId);
+    
+    if (!group) {
+      return;
+    }
+    
+    // Ensure selectedGroups is initialized
+    if (!this.selectedGroups) {
+      this.selectedGroups = [];
+    }
+    
+    const isSelected = groupItem && groupItem.classList.contains('selected');
+    
+    if (isSelected) {
+      // Deselect
+      if (groupItem) groupItem.classList.remove('selected');
+      this.selectedGroups = this.selectedGroups.filter(g => g.id !== groupId);
+    } else {
+      // Select
+      if (groupItem) groupItem.classList.add('selected');
+      this.selectedGroups.push({
+        id: group.id,
+        name: group.name,
+        description: group.description,
+        type: 'group',
+        members: group.members
+      });
+    }
+    
+    this.updateSelectedParticipantsDisplay();
   },
 
   switchToUsersTab() {
@@ -899,7 +982,7 @@ const ChatView = {
     };
   },
 
-  selectGroup(groupId) {
+  selectOwnerGroup(groupId) {
     // Clear all selections
     this.clearSelections();
     
@@ -1189,6 +1272,10 @@ const ChatView = {
     this.updateSelectedParticipantsDisplay();
   },
 
+  switchToGroupsTab() {
+    this.updateSelectedParticipantsDisplay();
+  },
+
   switchToExternalTab() {
     this.updateSelectedParticipantsDisplay();
   },
@@ -1196,6 +1283,11 @@ const ChatView = {
   selectInternalUser(userId) {
     const userItem = document.querySelector(`[data-user-id="${userId}"]`);
     const user = AppStore.getUserById(userId);
+    
+    // Ensure selectedInternalUsers is initialized
+    if (!this.selectedInternalUsers) {
+      this.selectedInternalUsers = [];
+    }
     
     if (userItem.classList.contains('selected')) {
       // Deselect
@@ -1295,28 +1387,35 @@ const ChatView = {
   },
 
   updateSelectedParticipantsDisplay() {
-    const totalSelected = this.selectedInternalUsers.length + this.selectedExternalUsers.length;
+    // Ensure arrays are initialized
+    if (!this.selectedInternalUsers) this.selectedInternalUsers = [];
+    if (!this.selectedGroups) this.selectedGroups = [];
+    if (!this.selectedExternalUsers) this.selectedExternalUsers = [];
+    
+    const totalSelected = this.selectedInternalUsers.length + this.selectedGroups.length + this.selectedExternalUsers.length;
     const section = document.getElementById('selectedParticipantsSection');
     const btn = document.getElementById('addParticipantsBtn');
     
     if (totalSelected === 0) {
-      section.style.display = 'none';
-      btn.disabled = true;
+      if (section) section.style.display = 'none';
+      if (btn) btn.disabled = true;
       return;
     }
     
-    section.style.display = 'block';
-    btn.disabled = false;
+    if (section) section.style.display = 'block';
+    if (btn) btn.disabled = false;
     
     const container = document.getElementById('selectedParticipantsList');
-    const allSelected = [...this.selectedInternalUsers, ...this.selectedExternalUsers];
+    const allSelected = [...this.selectedInternalUsers, ...this.selectedGroups, ...this.selectedExternalUsers];
     
-    container.innerHTML = allSelected.map(user => `
-      <span class="badge bg-primary">
-        <i class="fas fa-${user.type === 'internal' ? 'user' : 'user-plus'} me-1"></i>
-        ${user.name}
-      </span>
-    `).join('');
+    if (container) {
+      container.innerHTML = allSelected.map(item => `
+        <span class="badge bg-primary">
+          <i class="fas fa-${item.type === 'internal' ? 'user' : item.type === 'group' ? 'users' : 'user-plus'} me-1"></i>
+          ${item.name}${item.type === 'group' ? ` (${item.members.length} members)` : ''}
+        </span>
+      `).join('');
+    }
   },
 
   filterInternalUsers() {
@@ -1347,22 +1446,47 @@ const ChatView = {
   },
 
   clearParticipantSelections() {
-    document.querySelectorAll('.internal-user-item').forEach(item => {
+    document.querySelectorAll('.internal-user-item, .group-item').forEach(item => {
       item.classList.remove('selected');
     });
     this.selectedInternalUsers = [];
+    this.selectedGroups = [];
     this.selectedExternalUsers = [];
   },
 
+  filterGroups() {
+    const searchTerm = document.getElementById('groupSearch').value.toLowerCase();
+    const filteredGroups = AppStore.groups.filter(group => 
+      group.name.toLowerCase().includes(searchTerm) ||
+      group.description.toLowerCase().includes(searchTerm)
+    );
+
+    document.getElementById('groupList').innerHTML = filteredGroups.map(group => `
+      <div class="list-group-item list-group-item-action group-item ${this.selectedGroups.some(g => g.id === group.id) ? 'selected' : ''}" data-group-id="${group.id}" onclick="ChatView.selectGroup('${group.id}')">
+        <div class="d-flex align-items-center">
+          <div class="participant-avatar avatar-group me-3">
+            <i class="fas fa-users"></i>
+          </div>
+          <div>
+            <div class="fw-bold">${group.name}</div>
+            <small class="text-muted">${group.description}</small>
+            <div><small class="text-muted">${group.members.length} members</small></div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  },
+
   confirmAddParticipants() {
-    const totalSelected = this.selectedInternalUsers.length + this.selectedExternalUsers.length;
+    const totalSelected = this.selectedInternalUsers.length + this.selectedGroups.length + this.selectedExternalUsers.length;
     if (totalSelected === 0) {
       this.showToast('Please select at least one participant to add', 'error');
       return;
     }
 
     const conversation = AppStore.getConversationById(AppStore.selectedConversationId);
-    const participantNames = [...this.selectedInternalUsers, ...this.selectedExternalUsers].map(p => p.name).join(', ');
+    const allSelected = [...this.selectedInternalUsers, ...this.selectedGroups, ...this.selectedExternalUsers];
+    const participantNames = allSelected.map(p => p.type === 'group' ? `${p.name} (Group)` : p.name).join(', ');
     const confirmMessage = `Are you sure you want to add the following participants to "${conversation.name}"?\n\n${participantNames}`;
     
     this.showConfirmation(
@@ -1371,7 +1495,7 @@ const ChatView = {
       'fas fa-user-plus text-primary',
       () => {
         // Add participants to conversation
-        AppStore.addParticipantsToConversation(AppStore.selectedConversationId, [...this.selectedInternalUsers, ...this.selectedExternalUsers]);
+        AppStore.addParticipantsToConversation(AppStore.selectedConversationId, allSelected);
         
         // Close modal
         bootstrap.Modal.getInstance(document.getElementById('addParticipantsModal')).hide();

@@ -771,30 +771,58 @@ const AppStore = {
     const conversation = this.getConversationById(conversationId);
     
     if (conversation && participants.length > 0) {
-      // Add new participants to the conversation
+      const addedParticipants = [];
+      
+      // Process each participant
       participants.forEach(participant => {
-        // Check if participant is not already in the conversation
-        if (!conversation.participants.some(p => p.email === participant.email)) {
-          conversation.participants.push(participant);
+        if (participant.type === 'group') {
+          // Add all members of the group
+          participant.members.forEach(member => {
+            // Check if member is not already in the conversation
+            if (!conversation.participants.some(p => p.email === member.email)) {
+              const memberParticipant = {
+                id: member.id,
+                name: member.name,
+                email: member.email,
+                role: member.role,
+                type: 'internal',
+                initials: member.initials,
+                avatarClass: member.avatarClass
+              };
+              conversation.participants.push(memberParticipant);
+              addedParticipants.push(memberParticipant);
+            }
+          });
+        } else {
+          // Add individual participant (internal or external)
+          if (!conversation.participants.some(p => p.email === participant.email)) {
+            conversation.participants.push(participant);
+            addedParticipants.push(participant);
+          }
         }
       });
       
-      // Create system message about added participants
-      const participantNames = participants.map(p => p.name).join(', ');
-      this.addMessage(conversationId, {
-        id: Date.now(),
-        conversationId: conversationId,
-        senderId: 'system',
-        sender: 'System',
-        senderInitials: 'SYS',
-        avatarClass: 'avatar-system',
-        content: `${participantNames} ${participants.length > 1 ? 'have' : 'has'} been added to the conversation`,
-        time: "just now",
-        timestamp: new Date(),
-        isOwn: false,
-        isSystem: true,
-        status: "delivered"
-      });
+      if (addedParticipants.length > 0) {
+        // Create system message about added participants
+        const groupNames = participants.filter(p => p.type === 'group').map(p => `${p.name} (Group)`);
+        const individualNames = addedParticipants.filter(p => p.type !== 'group').map(p => p.name);
+        const allNames = [...groupNames, ...individualNames];
+        
+        this.addMessage(conversationId, {
+          id: Date.now(),
+          conversationId: conversationId,
+          senderId: 'system',
+          sender: 'System',
+          senderInitials: 'SYS',
+          avatarClass: 'avatar-system',
+          content: `${allNames.join(', ')} ${allNames.length > 1 ? 'have' : 'has'} been added to the conversation`,
+          time: "just now",
+          timestamp: new Date(),
+          isOwn: false,
+          isSystem: true,
+          status: "delivered"
+        });
+      }
       
       return true;
     }
