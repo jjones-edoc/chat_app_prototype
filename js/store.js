@@ -437,6 +437,61 @@ const AppStore = {
     ]
   },
 
+  // Groups
+  groups: [
+    {
+      id: 'hr',
+      name: 'Human Resources',
+      description: 'HR Department',
+      members: [
+        { id: 201, name: "Jennifer Adams", email: "jennifer.adams@creditunion.com", role: "HR Manager", initials: "JA", avatarClass: "avatar-blue" },
+        { id: 202, name: "Mark Thompson", email: "mark.thompson@creditunion.com", role: "HR Specialist", initials: "MT", avatarClass: "avatar-purple" }
+      ]
+    },
+    {
+      id: 'tellers',
+      name: 'Tellers',
+      description: 'Teller Department',
+      members: [
+        { id: 301, name: "Anna Davis", email: "anna.davis@creditunion.com", role: "Senior Teller", initials: "AD", avatarClass: "avatar-green" },
+        { id: 302, name: "Carlos Martinez", email: "carlos.martinez@creditunion.com", role: "Teller", initials: "CM", avatarClass: "avatar-orange" },
+        { id: 303, name: "Jessica Kim", email: "jessica.kim@creditunion.com", role: "Teller", initials: "JK", avatarClass: "avatar-blue" }
+      ]
+    },
+    {
+      id: 'loan_officers',
+      name: 'Loan Officers',
+      description: 'Loan Department',
+      members: [
+        { id: 2, name: "Sarah Johnson", email: "sarah.johnson@creditunion.com", role: "Loan Officer", initials: "SJ", avatarClass: "avatar-purple" },
+        { id: 8, name: "John Smith", email: "john.smith@creditunion.com", role: "Loan Officer", initials: "JS", avatarClass: "avatar-green" },
+        { id: 10, name: "Amanda Brown", email: "amanda.brown@creditunion.com", role: "Loan Officer", initials: "AB", avatarClass: "avatar-purple" },
+        { id: 12, name: "Tom Wilson", email: "tom.wilson@creditunion.com", role: "Business Loan Officer", initials: "TW", avatarClass: "avatar-orange" },
+        { id: 100, name: "David Jones", email: "david.jones@creditunion.com", role: "Senior Loan Officer", initials: "DJ", avatarClass: "avatar-green" }
+      ]
+    }
+  ],
+
+  // All users (for individual assignment)
+  allUsers: [
+    { id: 2, name: "Sarah Johnson", email: "sarah.johnson@creditunion.com", role: "Loan Officer", initials: "SJ", avatarClass: "avatar-purple" },
+    { id: 3, name: "Mike Chen", email: "mike.chen@creditunion.com", role: "Underwriter", initials: "MC", avatarClass: "avatar-orange" },
+    { id: 5, name: "Lisa Rodriguez", email: "lisa.rodriguez@creditunion.com", role: "Loan Officer", initials: "LR", avatarClass: "avatar-blue" },
+    { id: 6, name: "David Park", email: "david.park@creditunion.com", role: "Manager", initials: "DP", avatarClass: "avatar-green" },
+    { id: 8, name: "John Smith", email: "john.smith@creditunion.com", role: "Loan Officer", initials: "JS", avatarClass: "avatar-green" },
+    { id: 10, name: "Amanda Brown", email: "amanda.brown@creditunion.com", role: "Loan Officer", initials: "AB", avatarClass: "avatar-purple" },
+    { id: 12, name: "Tom Wilson", email: "tom.wilson@creditunion.com", role: "Business Loan Officer", initials: "TW", avatarClass: "avatar-orange" },
+    { id: 13, name: "Rachel Adams", email: "rachel.adams@creditunion.com", role: "Processor", initials: "RA", avatarClass: "avatar-blue" },
+    { id: 14, name: "Mary Garcia", email: "mary.garcia@creditunion.com", role: "Auto Loan Specialist", initials: "MG", avatarClass: "avatar-purple" },
+    { id: 15, name: "James Lee", email: "james.lee@creditunion.com", role: "Mortgage Specialist", initials: "JL", avatarClass: "avatar-orange" },
+    { id: 100, name: "David Jones", email: "david.jones@creditunion.com", role: "Senior Loan Officer", initials: "DJ", avatarClass: "avatar-green" },
+    { id: 201, name: "Jennifer Adams", email: "jennifer.adams@creditunion.com", role: "HR Manager", initials: "JA", avatarClass: "avatar-blue" },
+    { id: 202, name: "Mark Thompson", email: "mark.thompson@creditunion.com", role: "HR Specialist", initials: "MT", avatarClass: "avatar-purple" },
+    { id: 301, name: "Anna Davis", email: "anna.davis@creditunion.com", role: "Senior Teller", initials: "AD", avatarClass: "avatar-green" },
+    { id: 302, name: "Carlos Martinez", email: "carlos.martinez@creditunion.com", role: "Teller", initials: "CM", avatarClass: "avatar-orange" },
+    { id: 303, name: "Jessica Kim", email: "jessica.kim@creditunion.com", role: "Teller", initials: "JK", avatarClass: "avatar-blue" }
+  ],
+
   // Currently selected items
   selectedPackageId: null,
   selectedConversationId: 101,
@@ -525,5 +580,38 @@ const AppStore = {
     
     this.externalChatLink = link;
     return `${window.location.origin}/chat/${link.token}`;
+  },
+
+  transferOwnership(conversationId, assignee) {
+    const conversation = this.getConversationById(conversationId);
+    if (conversation) {
+      conversation.ownerId = assignee.id;
+      conversation.ownerName = assignee.name;
+      conversation.ownerType = assignee.type || 'user'; // 'user' or 'group'
+      
+      // Add system message about ownership transfer
+      this.addMessage(conversationId, {
+        id: Date.now(),
+        conversationId: conversationId,
+        senderId: 'system',
+        sender: 'System',
+        senderInitials: 'SYS',
+        avatarClass: 'avatar-system',
+        content: `Conversation ownership transferred to ${assignee.name}`,
+        time: "just now",
+        timestamp: new Date(),
+        isOwn: false,
+        isSystem: true,
+        status: "delivered"
+      });
+    }
+  },
+
+  getUserById(id) {
+    return this.allUsers.find(u => u.id === id);
+  },
+
+  getGroupById(id) {
+    return this.groups.find(g => g.id === id);
   }
 };

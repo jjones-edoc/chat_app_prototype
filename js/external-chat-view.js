@@ -215,7 +215,7 @@ const ExternalChatView = {
   },
 
   attachFile() {
-    alert('External users can attach files to share documents with the credit union');
+    this.showToast('External users can attach files to share documents with the credit union', 'info');
   },
 
   scrollToBottom() {
@@ -225,5 +225,61 @@ const ExternalChatView = {
         messagesArea.scrollTop = messagesArea.scrollHeight;
       }
     }, 100);
+  },
+
+  showToast(message, type = 'info') {
+    let toastContainer = document.getElementById('toastContainer');
+    
+    // Create toast container if it doesn't exist
+    if (!toastContainer) {
+      toastContainer = document.createElement('div');
+      toastContainer.id = 'toastContainer';
+      toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+      document.body.appendChild(toastContainer);
+    }
+    
+    const toastId = 'toast-' + Date.now();
+    
+    const iconMap = {
+      success: 'fas fa-check-circle text-success',
+      error: 'fas fa-exclamation-circle text-danger',
+      warning: 'fas fa-exclamation-triangle text-warning',
+      info: 'fas fa-info-circle text-info'
+    };
+    
+    const bgMap = {
+      success: 'bg-success',
+      error: 'bg-danger',
+      warning: 'bg-warning',
+      info: 'bg-info'
+    };
+    
+    const toastHtml = `
+      <div class="toast" id="${toastId}" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header ${bgMap[type]} text-white">
+          <i class="${iconMap[type]} me-2"></i>
+          <strong class="me-auto">Notification</strong>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">
+          ${message}
+        </div>
+      </div>
+    `;
+    
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+    
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement, {
+      autohide: true,
+      delay: 4000
+    });
+    
+    toast.show();
+    
+    // Remove toast element after it's hidden
+    toastElement.addEventListener('hidden.bs.toast', () => {
+      toastElement.remove();
+    });
   }
 };

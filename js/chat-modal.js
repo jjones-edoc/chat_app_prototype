@@ -449,7 +449,7 @@ const ChatModal = {
     const role = document.getElementById('externalRole').value || 'External Contact';
 
     if (!name || !email) {
-      alert('Please enter name and email');
+      this.showToast('Please enter name and email', 'error');
       return;
     }
 
@@ -480,17 +480,17 @@ const ChatModal = {
     const initialMessage = document.getElementById('initialMessage').value;
     
     if (!chatName.trim()) {
-      alert('Please enter a conversation name');
+      this.showToast('Please enter a conversation name', 'error');
       return;
     }
     
     if (this.selectedParticipants.length === 0) {
-      alert('Please select at least one participant');
+      this.showToast('Please select at least one participant', 'error');
       return;
     }
     
     if (!initialMessage.trim()) {
-      alert('Please enter an initial message');
+      this.showToast('Please enter an initial message', 'error');
       return;
     }
     
@@ -598,14 +598,14 @@ const ChatModal = {
       case 1:
         const chatName = document.getElementById('chatName').value.trim();
         if (!chatName) {
-          alert('Please enter a conversation name');
+          this.showToast('Please enter a conversation name', 'error');
           return false;
         }
         return true;
         
       case 2:
         if (this.selectedParticipants.length === 0) {
-          alert('Please select at least one participant');
+          this.showToast('Please select at least one participant', 'error');
           return false;
         }
         return true;
@@ -661,5 +661,61 @@ const ChatModal = {
     // Close modal
     const modal = bootstrap.Modal.getInstance(document.getElementById('chatModal'));
     if (modal) modal.hide();
+  },
+
+  showToast(message, type = 'info') {
+    let toastContainer = document.getElementById('toastContainer');
+    
+    // Create toast container if it doesn't exist
+    if (!toastContainer) {
+      toastContainer = document.createElement('div');
+      toastContainer.id = 'toastContainer';
+      toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+      document.body.appendChild(toastContainer);
+    }
+    
+    const toastId = 'toast-' + Date.now();
+    
+    const iconMap = {
+      success: 'fas fa-check-circle text-success',
+      error: 'fas fa-exclamation-circle text-danger',
+      warning: 'fas fa-exclamation-triangle text-warning',
+      info: 'fas fa-info-circle text-info'
+    };
+    
+    const bgMap = {
+      success: 'bg-success',
+      error: 'bg-danger',
+      warning: 'bg-warning',
+      info: 'bg-info'
+    };
+    
+    const toastHtml = `
+      <div class="toast" id="${toastId}" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header ${bgMap[type]} text-white">
+          <i class="${iconMap[type]} me-2"></i>
+          <strong class="me-auto">Notification</strong>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">
+          ${message}
+        </div>
+      </div>
+    `;
+    
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+    
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement, {
+      autohide: true,
+      delay: 4000
+    });
+    
+    toast.show();
+    
+    // Remove toast element after it's hidden
+    toastElement.addEventListener('hidden.bs.toast', () => {
+      toastElement.remove();
+    });
   }
 };

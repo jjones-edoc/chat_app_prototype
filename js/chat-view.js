@@ -63,6 +63,10 @@ const ChatView = {
       <!-- Modals -->
       ${this.renderModals()}
       ${ChatModal.render()}
+
+      <!-- Toast Container -->
+      <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer">
+      </div>
     `;
   },
 
@@ -360,6 +364,93 @@ ${AppStore.currentUser.name}
           </div>
         </div>
       </div>
+
+      <!-- Switch Ownership Modal -->
+      <div class="modal fade" id="switchOwnerModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title"><i class="fas fa-exchange-alt me-2"></i>Transfer Conversation Ownership</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <ul class="nav nav-tabs" id="assignmentTabs" role="tablist">
+                  <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users-pane" type="button" role="tab" onclick="ChatView.switchToUsersTab()">
+                      <i class="fas fa-user me-2"></i>Individual Users
+                    </button>
+                  </li>
+                  <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="groups-tab" data-bs-toggle="tab" data-bs-target="#groups-pane" type="button" role="tab" onclick="ChatView.switchToGroupsTab()">
+                      <i class="fas fa-users me-2"></i>Groups
+                    </button>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="tab-content" id="assignmentTabContent">
+                <div class="tab-pane fade show active" id="users-pane" role="tabpanel" aria-labelledby="users-tab">
+                  <div class="mb-3">
+                    <label class="form-label">Select User:</label>
+                    <div class="search-box mb-2">
+                      <i class="fas fa-search"></i>
+                      <input type="text" class="form-control ps-5" id="userSearch" placeholder="Search users..." onkeyup="ChatView.filterUsers()">
+                    </div>
+                    <div class="list-group" id="userList" style="max-height: 300px; overflow-y: auto;">
+                      ${this.renderUserList()}
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="tab-pane fade" id="groups-pane" role="tabpanel" aria-labelledby="groups-tab">
+                  <div class="mb-3">
+                    <label class="form-label">Select Group:</label>
+                    <div class="list-group" id="groupList">
+                      ${this.renderGroupList()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Transferring ownership will give the selected user or group full control over this conversation.
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" id="transferOwnershipBtn" onclick="ChatView.confirmOwnershipTransfer()" disabled>Transfer Ownership</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Confirmation Modal -->
+      <div class="modal fade" id="confirmationModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="confirmationTitle">Confirm Action</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="d-flex align-items-center">
+                <div class="me-3">
+                  <i id="confirmationIcon" class="fas fa-question-circle text-warning" style="font-size: 2rem;"></i>
+                </div>
+                <div>
+                  <p id="confirmationMessage" class="mb-0">Are you sure you want to proceed?</p>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" id="confirmationConfirmBtn">Confirm</button>
+            </div>
+          </div>
+        </div>
+      </div>
     `;
   },
 
@@ -412,42 +503,52 @@ ${AppStore.currentUser.name}
   shareViaText() {
     bootstrap.Modal.getInstance(document.getElementById('sendLinkModal')).hide();
     const link = AppStore.generateChatLink(AppStore.selectedConversationId);
-    alert(`Text message interface would open with link:\n${link}`);
+    this.showToast('Text message interface would open with the chat link', 'info');
   },
 
   sendEmailInvite() {
     const email = document.getElementById('emailTo').value;
     if (!email) {
-      alert('Please enter an email address');
+      this.showToast('Please enter an email address', 'error');
       return;
     }
     
     const link = AppStore.generateChatLink(AppStore.selectedConversationId);
-    alert(`Email sent to ${email} with chat link`);
+    this.showToast(`Email sent to ${email} with chat link`, 'success');
     bootstrap.Modal.getInstance(document.getElementById('emailShareModal')).hide();
   },
 
   switchOwner() {
     this.toggleChatMenu();
-    alert('Switch owner functionality');
+    new bootstrap.Modal(document.getElementById('switchOwnerModal')).show();
   },
 
   closeChat() {
     this.toggleChatMenu();
-    if (confirm('Are you sure you want to close this chat? It will be archived.')) {
-      alert('Chat closed and archived');
-    }
+    this.showConfirmation(
+      'Close Chat',
+      'Are you sure you want to close this chat? It will be archived.',
+      'fas fa-archive text-warning',
+      () => {
+        this.showToast('Chat closed and archived', 'success');
+      }
+    );
   },
 
   deleteChat() {
     this.toggleChatMenu();
-    if (confirm('Are you sure you want to permanently delete this chat? This action cannot be undone.')) {
-      alert('Chat deleted permanently');
-    }
+    this.showConfirmation(
+      'Delete Chat',
+      'Are you sure you want to permanently delete this chat? This action cannot be undone.',
+      'fas fa-trash text-danger',
+      () => {
+        this.showToast('Chat deleted permanently', 'success');
+      }
+    );
   },
 
   attachFile() {
-    alert('File attachment functionality would open file picker');
+    this.showToast('File attachment functionality would open file picker', 'info');
   },
 
   openPackage(packageId) {
@@ -664,5 +765,217 @@ ${AppStore.currentUser.name}
 
     // For other users, default to LO (Loan Officer) since most staff are loan officers
     return 'LO';
+  },
+
+  renderUserList() {
+    return AppStore.allUsers
+      .filter(user => user.id !== AppStore.currentUser.id) // Exclude current user
+      .map(user => `
+        <div class="list-group-item list-group-item-action user-item" data-user-id="${user.id}" onclick="ChatView.selectUser(${user.id})">
+          <div class="d-flex align-items-center">
+            <div class="participant-avatar ${user.avatarClass} me-3">${user.initials}</div>
+            <div>
+              <div class="fw-bold">${user.name}</div>
+              <small class="text-muted">${user.email}</small>
+              <div><small class="text-muted">${user.role}</small></div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+  },
+
+  renderGroupList() {
+    return AppStore.groups.map(group => `
+      <div class="list-group-item list-group-item-action group-item" data-group-id="${group.id}" onclick="ChatView.selectGroup('${group.id}')">
+        <div class="d-flex align-items-center">
+          <div class="participant-avatar avatar-group me-3">
+            <i class="fas fa-users"></i>
+          </div>
+          <div>
+            <div class="fw-bold">${group.name}</div>
+            <small class="text-muted">${group.description}</small>
+            <div><small class="text-muted">${group.members.length} members</small></div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  },
+
+  switchToUsersTab() {
+    // Reset selection and disable transfer button
+    this.clearSelections();
+    document.getElementById('transferOwnershipBtn').disabled = true;
+  },
+
+  switchToGroupsTab() {
+    // Reset selection and disable transfer button
+    this.clearSelections();
+    document.getElementById('transferOwnershipBtn').disabled = true;
+  },
+
+  selectUser(userId) {
+    // Clear all selections
+    this.clearSelections();
+    
+    // Mark selected user
+    const userItem = document.querySelector(`[data-user-id="${userId}"]`);
+    userItem.classList.add('active');
+    
+    // Enable transfer button
+    document.getElementById('transferOwnershipBtn').disabled = false;
+    
+    // Store selection
+    this.selectedAssignee = { 
+      id: userId, 
+      name: AppStore.getUserById(userId).name,
+      type: 'user'
+    };
+  },
+
+  selectGroup(groupId) {
+    // Clear all selections
+    this.clearSelections();
+    
+    // Mark selected group
+    const groupItem = document.querySelector(`[data-group-id="${groupId}"]`);
+    groupItem.classList.add('active');
+    
+    // Enable transfer button
+    document.getElementById('transferOwnershipBtn').disabled = false;
+    
+    // Store selection
+    this.selectedAssignee = { 
+      id: groupId, 
+      name: AppStore.getGroupById(groupId).name,
+      type: 'group'
+    };
+  },
+
+  clearSelections() {
+    // Remove active class from all items
+    document.querySelectorAll('.user-item, .group-item').forEach(item => {
+      item.classList.remove('active');
+    });
+    this.selectedAssignee = null;
+  },
+
+  filterUsers() {
+    const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+    const filteredUsers = AppStore.allUsers
+      .filter(user => user.id !== AppStore.currentUser.id)
+      .filter(user => 
+        user.name.toLowerCase().includes(searchTerm) ||
+        user.email.toLowerCase().includes(searchTerm) ||
+        user.role.toLowerCase().includes(searchTerm)
+      );
+
+    document.getElementById('userList').innerHTML = filteredUsers.map(user => `
+      <div class="list-group-item list-group-item-action user-item" data-user-id="${user.id}" onclick="ChatView.selectUser(${user.id})">
+        <div class="d-flex align-items-center">
+          <div class="participant-avatar ${user.avatarClass} me-3">${user.initials}</div>
+          <div>
+            <div class="fw-bold">${user.name}</div>
+            <small class="text-muted">${user.email}</small>
+            <div><small class="text-muted">${user.role}</small></div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  },
+
+  confirmOwnershipTransfer() {
+    if (!this.selectedAssignee) {
+      this.showToast('Please select a user or group to transfer ownership to', 'error');
+      return;
+    }
+
+    const conversation = AppStore.getConversationById(AppStore.selectedConversationId);
+    const confirmMessage = `Are you sure you want to transfer ownership of "${conversation.name}" to ${this.selectedAssignee.name}?`;
+    
+    this.showConfirmation(
+      'Transfer Ownership',
+      confirmMessage,
+      'fas fa-exchange-alt text-primary',
+      () => {
+        // Transfer ownership
+        AppStore.transferOwnership(AppStore.selectedConversationId, this.selectedAssignee);
+        
+        // Close modal
+        bootstrap.Modal.getInstance(document.getElementById('switchOwnerModal')).hide();
+        
+        // Re-render to show updated ownership
+        App.render();
+        
+        // Show success message
+        this.showToast(`Ownership successfully transferred to ${this.selectedAssignee.name}`, 'success');
+      }
+    );
+  },
+
+  showToast(message, type = 'info') {
+    const toastContainer = document.getElementById('toastContainer');
+    const toastId = 'toast-' + Date.now();
+    
+    const iconMap = {
+      success: 'fas fa-check-circle text-success',
+      error: 'fas fa-exclamation-circle text-danger',
+      warning: 'fas fa-exclamation-triangle text-warning',
+      info: 'fas fa-info-circle text-info'
+    };
+    
+    const bgMap = {
+      success: 'bg-success',
+      error: 'bg-danger',
+      warning: 'bg-warning',
+      info: 'bg-info'
+    };
+    
+    const toastHtml = `
+      <div class="toast" id="${toastId}" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header ${bgMap[type]} text-white">
+          <i class="${iconMap[type]} me-2"></i>
+          <strong class="me-auto">Notification</strong>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">
+          ${message}
+        </div>
+      </div>
+    `;
+    
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+    
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement, {
+      autohide: true,
+      delay: 4000
+    });
+    
+    toast.show();
+    
+    // Remove toast element after it's hidden
+    toastElement.addEventListener('hidden.bs.toast', () => {
+      toastElement.remove();
+    });
+  },
+
+  showConfirmation(title, message, icon, onConfirm) {
+    document.getElementById('confirmationTitle').textContent = title;
+    document.getElementById('confirmationMessage').textContent = message;
+    document.getElementById('confirmationIcon').className = icon;
+    
+    const confirmBtn = document.getElementById('confirmationConfirmBtn');
+    
+    // Remove any existing event listeners
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+    
+    // Add new event listener
+    newConfirmBtn.addEventListener('click', () => {
+      bootstrap.Modal.getInstance(document.getElementById('confirmationModal')).hide();
+      onConfirm();
+    });
+    
+    new bootstrap.Modal(document.getElementById('confirmationModal')).show();
   }
 };

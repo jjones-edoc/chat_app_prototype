@@ -28,6 +28,52 @@ body {
   height: 60px;
 }
 
+/* Ownership Transfer Styles */
+.avatar-group {
+  background-color: var(--gray);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-system {
+  background-color: #6c757d;
+  color: white;
+}
+
+.user-item.active,
+.group-item.active {
+  background-color: var(--primary-blue);
+  color: white;
+}
+
+.user-item.active .text-muted,
+.group-item.active .text-muted {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.list-group-item:hover {
+  background-color: #f8f9fa;
+  cursor: pointer;
+}
+
+.user-item.active:hover,
+.group-item.active:hover {
+  background-color: var(--light-blue);
+}
+
+.participant-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+}
+
 .header .logo {
   font-size: 1.3rem;
   font-weight: bold;
