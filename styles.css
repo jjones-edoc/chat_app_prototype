@@ -451,7 +451,7 @@ body {
   margin-top: 5px;
 }
 
-.chat-menu-btn {
+.chat-menu-btn, .package-icon-btn {
   background: none;
   border: none;
   color: var(--gray);
@@ -460,11 +460,30 @@ body {
   padding: 8px;
   border-radius: 50%;
   transition: all 0.2s;
+  margin-left: 5px;
 }
 
-.chat-menu-btn:hover {
+.chat-menu-btn:hover, .package-icon-btn:hover {
   background: var(--light-gray);
   color: var(--primary-blue);
+}
+
+.package-icon-btn {
+  color: var(--primary-blue);
+}
+
+.package-icon-btn:hover {
+  background: var(--light-blue);
+  color: white;
+}
+
+.package-icon-btn.active {
+  background: var(--primary-blue);
+  color: white;
+}
+
+.package-icon-btn.active:hover {
+  background: var(--light-blue);
 }
 
 .messages-area {
@@ -670,6 +689,8 @@ body {
 /* Chat Management Dropdown */
 .chat-management {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .chat-menu {
@@ -919,6 +940,99 @@ body {
   border-radius: 20px;
   font-size: 13px;
   display: inline-block;
+}
+
+/* Package selection modal styles */
+.package-item {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.package-item:hover {
+  background-color: #f8f9fa;
+}
+
+.package-item.active {
+  background-color: var(--primary-blue);
+  color: white;
+}
+
+.package-item.active .text-muted {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.package-item.active .status-badge {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+}
+
+.package-list {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.package-list .list-group-item {
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.package-list .list-group-item:last-child {
+  border-bottom: none;
+}
+
+/* Add Participants Modal Styles */
+.internal-user-item {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.internal-user-item:hover {
+  background-color: #f8f9fa;
+}
+
+.internal-user-item.selected {
+  background-color: var(--primary-blue);
+  color: white;
+}
+
+.internal-user-item.selected .text-muted {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.participant-list {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.participant-list .list-group-item {
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.participant-list .list-group-item:last-child {
+  border-bottom: none;
+}
+
+.status-out-for-esign {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-reference {
+  background-color: #cce5ff;
+  color: #004085;
+}
+
+.status-waiting-for-doc {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-ready-to-sign {
+  background-color: #d4edda;
+  color: #155724;
 }
 
 /* Chat Creation Wizard Styles */

@@ -173,6 +173,22 @@ const AppStore = {
       unreadCount: 0,
       ownerId: 100,
       isActive: false
+    },
+    {
+      id: 501,
+      name: "Robert Chen - General Inquiry",
+      packageId: null,
+      packageName: null,
+      participants: [
+        { id: 7, name: "Robert Chen", type: "external", initials: "RC", avatarClass: "avatar-blue" },
+        { id: 100, name: "David Jones", type: "internal", initials: "DJ", avatarClass: "avatar-green" }
+      ],
+      lastActivity: "15 minutes ago",
+      lastMessage: "Thank you for the information! I'll consider my options.",
+      hasNewMessages: true,
+      unreadCount: 2,
+      ownerId: 100,
+      isActive: false
     }
   ],
 
@@ -437,6 +453,73 @@ const AppStore = {
         isOwn: false,
         status: "read"
       }
+    ],
+    501: [
+      {
+        id: 1,
+        conversationId: 501,
+        senderId: 7,
+        sender: "Robert Chen",
+        senderInitials: "RC",
+        avatarClass: "avatar-blue",
+        content: "Hi, I'm interested in learning about auto loan options. What rates are currently available?",
+        time: "20 minutes ago",
+        timestamp: new Date(Date.now() - 20 * 60 * 1000),
+        isOwn: false,
+        status: "read"
+      },
+      {
+        id: 2,
+        conversationId: 501,
+        senderId: 100,
+        sender: "David Jones",
+        senderInitials: "DJ",
+        avatarClass: "avatar-green",
+        content: "Hi Robert! I'd be happy to help you with auto loan information. Our current rates start at 4.5% for new vehicles and 5.2% for used vehicles, depending on your credit profile and loan term. Are you looking to purchase a new or used vehicle?",
+        time: "18 minutes ago",
+        timestamp: new Date(Date.now() - 18 * 60 * 1000),
+        isOwn: true,
+        status: "delivered"
+      },
+      {
+        id: 3,
+        conversationId: 501,
+        senderId: 7,
+        sender: "Robert Chen",
+        senderInitials: "RC",
+        avatarClass: "avatar-blue",
+        content: "I'm looking at a used 2022 Honda Civic. The price is around $22,000. What would my monthly payment be for a 5-year loan?",
+        time: "16 minutes ago",
+        timestamp: new Date(Date.now() - 16 * 60 * 1000),
+        isOwn: false,
+        status: "read"
+      },
+      {
+        id: 4,
+        conversationId: 501,
+        senderId: 100,
+        sender: "David Jones",
+        senderInitials: "DJ",
+        avatarClass: "avatar-green",
+        content: "For a $22,000 used vehicle loan at our current 5.2% rate over 60 months, your monthly payment would be approximately $418. This assumes good credit (700+). If you'd like to move forward, I can help you start a formal auto loan application and attach this conversation to your loan package for easy tracking.",
+        time: "15 minutes ago",
+        timestamp: new Date(Date.now() - 15 * 60 * 1000),
+        isOwn: true,
+        status: "delivered"
+      },
+      {
+        id: 5,
+        conversationId: 501,
+        senderId: 7,
+        sender: "Robert Chen",
+        senderInitials: "RC",
+        avatarClass: "avatar-blue",
+        content: "Thank you for the information! I'll consider my options.",
+        time: "15 minutes ago",
+        timestamp: new Date(Date.now() - 15 * 60 * 1000),
+        isOwn: false,
+        status: "delivered"
+      }
     ]
   },
 
@@ -641,6 +724,79 @@ const AppStore = {
       if (ownerGroup && user.groupMemberships) {
         return user.groupMemberships.includes(ownerGroup.id);
       }
+    }
+    
+    return false;
+  },
+
+  attachConversationToPackage(conversationId, packageId) {
+    const conversation = this.getConversationById(conversationId);
+    const pkg = this.getPackageById(packageId);
+    
+    if (conversation && pkg) {
+      conversation.packageId = packageId;
+      conversation.packageName = pkg.name;
+      
+      // Add system message about package attachment
+      this.addMessage(conversationId, {
+        id: Date.now(),
+        conversationId: conversationId,
+        senderId: 'system',
+        sender: 'System',
+        senderInitials: 'SYS',
+        avatarClass: 'avatar-system',
+        content: `Conversation attached to package: ${pkg.name}`,
+        time: "just now",
+        timestamp: new Date(),
+        isOwn: false,
+        isSystem: true,
+        status: "delivered"
+      });
+      
+      // Update package to indicate it has chats
+      pkg.hasChats = true;
+      if (pkg.chatCount) {
+        pkg.chatCount++;
+      } else {
+        pkg.chatCount = 1;
+      }
+      
+      return true;
+    }
+    
+    return false;
+  },
+
+  addParticipantsToConversation(conversationId, participants) {
+    const conversation = this.getConversationById(conversationId);
+    
+    if (conversation && participants.length > 0) {
+      // Add new participants to the conversation
+      participants.forEach(participant => {
+        // Check if participant is not already in the conversation
+        if (!conversation.participants.some(p => p.email === participant.email)) {
+          conversation.participants.push(participant);
+        }
+      });
+      
+      // Create system message about added participants
+      const participantNames = participants.map(p => p.name).join(', ');
+      this.addMessage(conversationId, {
+        id: Date.now(),
+        conversationId: conversationId,
+        senderId: 'system',
+        sender: 'System',
+        senderInitials: 'SYS',
+        avatarClass: 'avatar-system',
+        content: `${participantNames} ${participants.length > 1 ? 'have' : 'has'} been added to the conversation`,
+        time: "just now",
+        timestamp: new Date(),
+        isOwn: false,
+        isSystem: true,
+        status: "delivered"
+      });
+      
+      return true;
     }
     
     return false;

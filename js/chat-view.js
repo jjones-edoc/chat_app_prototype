@@ -56,7 +56,7 @@ const ChatView = {
           </div>
 
           <!-- Right Sidebar - Package Details -->
-          ${activeConversation && activeConversation.packageId ? this.renderPackageSidebar(activeConversation) : ''}
+          ${activeConversation && activeConversation.packageId && this.isPackagePaneVisible() ? this.renderPackageSidebar(activeConversation) : ''}
         </div>
       </div>
 
@@ -75,8 +75,11 @@ const ChatView = {
       // Determine avatar style based on ownership
       let avatarClass, avatarContent, ownerTooltip;
       
-      if (conv.participants.length > 2) {
-        // Multi-participant conversation - show owner designation
+      // Check if this conversation has any internal participants (making it a business conversation)
+      const hasInternalParticipants = conv.participants.some(p => p.type === 'internal');
+      
+      if (hasInternalParticipants) {
+        // Business conversation - show owner designation
         avatarContent = this.getOwnerDesignation(conv);
         ownerTooltip = this.getOwnerTooltip(conv);
         if (conv.ownerType === 'group') {
@@ -87,7 +90,7 @@ const ChatView = {
             AppStore.currentUser.avatarClass : 'avatar-blue';
         }
       } else {
-        // Single participant conversation - use participant's avatar
+        // Pure external conversation - use participant's avatar
         avatarClass = conv.participants[0].avatarClass;
         avatarContent = conv.participants[0].initials;
         ownerTooltip = conv.participants[0].name;
@@ -130,6 +133,11 @@ const ChatView = {
         </div>
         ${canManage ? `
           <div class="chat-management">
+            ${conversation.packageId ? `
+              <button class="package-icon-btn ${this.isPackagePaneVisible() ? 'active' : ''}" onclick="ChatView.togglePackagePane()" title="Toggle Package Details">
+                <i class="fas fa-box"></i>
+              </button>
+            ` : ''}
             <button class="chat-menu-btn" onclick="ChatView.toggleChatMenu()">
               <i class="fas fa-ellipsis-v"></i>
             </button>
@@ -137,12 +145,11 @@ const ChatView = {
               <div class="chat-menu-item" onclick="ChatView.addToChat()">
                 <i class="fas fa-user-plus"></i>Add to Chat
               </div>
-              <div class="chat-menu-item" onclick="ChatView.attachToPackage()">
-                <i class="fas fa-paperclip"></i>Attach to Package
-              </div>
-              <div class="chat-menu-item" onclick="ChatView.sendChatLink()">
-                <i class="fas fa-link"></i>Send Chat Link
-              </div>
+              ${!conversation.packageId ? `
+                <div class="chat-menu-item" onclick="ChatView.attachToPackage()">
+                  <i class="fas fa-paperclip"></i>Attach to Package
+                </div>
+              ` : ''}
               <div class="chat-menu-item" onclick="ChatView.switchOwner()">
                 <i class="fas fa-exchange-alt"></i>Switch Owner
               </div>
@@ -277,112 +284,79 @@ const ChatView = {
 
   renderModals() {
     return `
-      <!-- Add User Modal -->
-      <div class="modal fade" id="addUserModal" tabindex="-1">
-        <div class="modal-dialog">
+      <!-- Add Participants Modal -->
+      <div class="modal fade" id="addParticipantsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Add Users or Groups</h5>
+              <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Add Participants to Chat</h5>
               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-              <div class="search-box mb-3">
-                <i class="fas fa-search"></i>
-                <input type="text" class="form-control ps-5" placeholder="Search users or groups..." />
-              </div>
-              <div class="list-group">
-                <div class="list-group-item list-group-item-action">
-                  <div class="d-flex align-items-center">
-                    <div class="participant-avatar me-3">JD</div>
-                    <div>
-                      <div class="fw-bold">John Doe</div>
-                      <small class="text-muted">john.doe@creditunion.com</small>
-                    </div>
+              <!-- Tab Navigation -->
+              <ul class="nav nav-tabs mb-3" id="participantTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link active" id="internal-tab" data-bs-toggle="tab" data-bs-target="#internal-pane" type="button" role="tab" onclick="ChatView.switchToInternalTab()">
+                    <i class="fas fa-users me-2"></i>Internal Users
+                  </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="external-tab" data-bs-toggle="tab" data-bs-target="#external-pane" type="button" role="tab" onclick="ChatView.switchToExternalTab()">
+                    <i class="fas fa-user-plus me-2"></i>External Users
+                  </button>
+                </li>
+              </ul>
+
+              <!-- Tab Content -->
+              <div class="tab-content" id="participantTabContent">
+                <!-- Internal Users Tab -->
+                <div class="tab-pane fade show active" id="internal-pane" role="tabpanel">
+                  <div class="search-box mb-3">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="form-control ps-5" id="internalSearch" placeholder="Search internal users..." onkeyup="ChatView.filterInternalUsers()">
+                  </div>
+                  <div class="participant-list" id="internalUserList" style="max-height: 300px; overflow-y: auto;">
+                    ${this.renderInternalUserList()}
                   </div>
                 </div>
-                <div class="list-group-item list-group-item-action">
-                  <div class="d-flex align-items-center">
-                    <div class="participant-avatar me-3">LT</div>
-                    <div>
-                      <div class="fw-bold">Loan Team</div>
-                      <small class="text-muted">Group - 5 members</small>
+
+                <!-- External Users Tab -->
+                <div class="tab-pane fade" id="external-pane" role="tabpanel">
+                  <div class="mb-3">
+                    <label class="form-label">Add External Participant:</label>
+                    <div class="row g-2">
+                      <div class="col-md-6">
+                        <input type="text" class="form-control" id="externalName" placeholder="Full Name">
+                      </div>
+                      <div class="col-md-6">
+                        <input type="email" class="form-control" id="externalEmail" placeholder="Email Address">
+                      </div>
                     </div>
+                    <div class="mt-2">
+                      <input type="text" class="form-control" id="externalRole" placeholder="Role/Title (optional)">
+                    </div>
+                    <button type="button" class="btn btn-outline-primary mt-2" onclick="ChatView.addExternalParticipant()">
+                      <i class="fas fa-plus me-2"></i>Add External User
+                    </button>
                   </div>
+                  <div id="externalParticipantsList">
+                    <!-- Added external participants will appear here -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- Selected Participants Summary -->
+              <div class="mt-3" id="selectedParticipantsSection" style="display: none;">
+                <hr>
+                <h6>Selected Participants:</h6>
+                <div id="selectedParticipantsList" class="d-flex flex-wrap gap-2">
+                  <!-- Selected participants will be shown here -->
                 </div>
               </div>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="button" class="btn btn-primary">Add Selected</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Send Chat Link Modal -->
-      <div class="modal fade" id="sendLinkModal" tabindex="-1">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title"><i class="fas fa-link me-2"></i>Share Chat Link</h5>
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <div class="mb-3">
-                <label class="form-label">Choose sharing method:</label>
-                <div class="d-grid gap-2">
-                  <button class="btn btn-outline-primary" onclick="ChatView.shareViaEmail()">
-                    <i class="fas fa-envelope me-2"></i>Share via Email
-                  </button>
-                  <button class="btn btn-outline-primary" onclick="ChatView.shareViaText()">
-                    <i class="fas fa-sms me-2"></i>Share via Text Message
-                  </button>
-                </div>
-              </div>
-              <div class="alert alert-info">
-                <i class="fas fa-info-circle me-2"></i>
-                Chat links are valid for 90 days and allow external users to join this conversation.
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Email Share Modal -->
-      <div class="modal fade" id="emailShareModal" tabindex="-1">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title"><i class="fas fa-envelope me-2"></i>Share via Email</h5>
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <div class="mb-3">
-                <label for="emailTo" class="form-label">To:</label>
-                <input type="email" class="form-control" id="emailTo" placeholder="Enter email address">
-              </div>
-              <div class="mb-3">
-                <label for="emailMessage" class="form-label">Message:</label>
-                <textarea class="form-control" id="emailMessage" rows="4">
-Hi,
-
-You've been invited to join a secure chat conversation. Click the link below to access:
-
-[Chat Link]
-
-This link will expire in 90 days.
-
-Best regards,
-${AppStore.currentUser.name}
-                </textarea>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="button" class="btn btn-primary" onclick="ChatView.sendEmailInvite()">Send Email</button>
+              <button type="button" class="btn btn-primary" id="addParticipantsBtn" onclick="ChatView.confirmAddParticipants()" disabled>Add Selected</button>
             </div>
           </div>
         </div>
@@ -449,6 +423,38 @@ ${AppStore.currentUser.name}
         </div>
       </div>
 
+      <!-- Attach to Package Modal -->
+      <div class="modal fade" id="attachPackageModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title"><i class="fas fa-paperclip me-2"></i>Attach to Package</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label">Select a package to attach this conversation to:</label>
+                <div class="search-box mb-3">
+                  <i class="fas fa-search"></i>
+                  <input type="text" class="form-control ps-5" id="packageSearch" placeholder="Search packages..." onkeyup="ChatView.filterPackages()">
+                </div>
+                <div class="package-list" id="packageList" style="max-height: 300px; overflow-y: auto;">
+                  ${this.renderPackageList()}
+                </div>
+              </div>
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Attaching this conversation to a package will enable package details viewing and better organization.
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" id="attachPackageBtn" onclick="ChatView.confirmPackageAttachment()" disabled>Attach to Package</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Confirmation Modal -->
       <div class="modal fade" id="confirmationModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -503,43 +509,23 @@ ${AppStore.currentUser.name}
 
   addToChat() {
     this.toggleChatMenu();
-    new bootstrap.Modal(document.getElementById('addUserModal')).show();
+    this.selectedInternalUsers = [];
+    this.selectedExternalUsers = [];
+    this.clearParticipantSelections();
+    document.getElementById('addParticipantsBtn').disabled = true;
+    document.getElementById('selectedParticipantsSection').style.display = 'none';
+    new bootstrap.Modal(document.getElementById('addParticipantsModal')).show();
   },
 
   attachToPackage() {
     this.toggleChatMenu();
-    alert('Attach to package functionality');
+    this.selectedPackage = null;
+    document.getElementById('attachPackageBtn').disabled = true;
+    document.getElementById('packageSearch').value = '';
+    document.getElementById('packageList').innerHTML = this.renderPackageList();
+    new bootstrap.Modal(document.getElementById('attachPackageModal')).show();
   },
 
-  sendChatLink() {
-    this.toggleChatMenu();
-    new bootstrap.Modal(document.getElementById('sendLinkModal')).show();
-  },
-
-  shareViaEmail() {
-    bootstrap.Modal.getInstance(document.getElementById('sendLinkModal')).hide();
-    setTimeout(() => {
-      new bootstrap.Modal(document.getElementById('emailShareModal')).show();
-    }, 300);
-  },
-
-  shareViaText() {
-    bootstrap.Modal.getInstance(document.getElementById('sendLinkModal')).hide();
-    const link = AppStore.generateChatLink(AppStore.selectedConversationId);
-    this.showToast('Text message interface would open with the chat link', 'info');
-  },
-
-  sendEmailInvite() {
-    const email = document.getElementById('emailTo').value;
-    if (!email) {
-      this.showToast('Please enter an email address', 'error');
-      return;
-    }
-    
-    const link = AppStore.generateChatLink(AppStore.selectedConversationId);
-    this.showToast(`Email sent to ${email} with chat link`, 'success');
-    bootstrap.Modal.getInstance(document.getElementById('emailShareModal')).hide();
-  },
 
   switchOwner() {
     this.toggleChatMenu();
@@ -576,6 +562,26 @@ ${AppStore.currentUser.name}
 
   openPackage(packageId) {
     App.navigateTo('packages');
+  },
+
+  togglePackagePane() {
+    if (!this.packagePaneState) {
+      this.packagePaneState = {};
+    }
+    
+    const conversationId = AppStore.selectedConversationId;
+    this.packagePaneState[conversationId] = !this.packagePaneState[conversationId];
+    
+    App.render();
+  },
+
+  isPackagePaneVisible() {
+    if (!this.packagePaneState) {
+      this.packagePaneState = {};
+    }
+    
+    const conversationId = AppStore.selectedConversationId;
+    return this.packagePaneState[conversationId] || false;
   },
 
   handleKeyPress(event) {
@@ -688,8 +694,11 @@ ${AppStore.currentUser.name}
       // Determine avatar style based on ownership (same logic as renderConversationsList)
       let avatarClass, avatarContent, ownerTooltip;
       
-      if (conv.participants.length > 2) {
-        // Multi-participant conversation - show owner designation
+      // Check if this conversation has any internal participants (making it a business conversation)
+      const hasInternalParticipants = conv.participants.some(p => p.type === 'internal');
+      
+      if (hasInternalParticipants) {
+        // Business conversation - show owner designation
         avatarContent = this.getOwnerDesignation(conv);
         ownerTooltip = this.getOwnerTooltip(conv);
         if (conv.ownerType === 'group') {
@@ -700,7 +709,7 @@ ${AppStore.currentUser.name}
             AppStore.currentUser.avatarClass : 'avatar-blue';
         }
       } else {
-        // Single participant conversation - use participant's avatar
+        // Pure external conversation - use participant's avatar
         avatarClass = conv.participants[0].avatarClass;
         avatarContent = conv.participants[0].initials;
         ownerTooltip = conv.participants[0].name;
@@ -1059,5 +1068,320 @@ ${AppStore.currentUser.name}
 
     // Fallback
     return 'Owner unknown';
+  },
+
+  renderPackageList() {
+    return AppStore.packages.map(pkg => `
+      <div class="list-group-item list-group-item-action package-item" data-package-id="${pkg.id}" onclick="ChatView.selectPackage(${pkg.id})">
+        <div class="d-flex align-items-center">
+          <div class="package-number ${pkg.type} me-3">
+            ${pkg.id}
+          </div>
+          <div class="flex-grow-1">
+            <div class="fw-bold">${pkg.name}</div>
+            <div class="text-muted small">
+              <span class="status-badge status-${pkg.status.toLowerCase().replace(/\s+/g, '-')}">${pkg.status}</span>
+              <span class="ms-2">Owner: ${pkg.owner}</span>
+            </div>
+            <div class="text-muted small">Created: ${pkg.created}</div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  },
+
+  selectPackage(packageId) {
+    // Clear all selections
+    document.querySelectorAll('.package-item').forEach(item => {
+      item.classList.remove('active');
+    });
+    
+    // Mark selected package
+    const packageItem = document.querySelector(`[data-package-id="${packageId}"]`);
+    if (packageItem) {
+      packageItem.classList.add('active');
+    }
+    
+    // Enable attach button
+    document.getElementById('attachPackageBtn').disabled = false;
+    
+    // Store selection
+    this.selectedPackage = AppStore.getPackageById(packageId);
+  },
+
+  filterPackages() {
+    const searchTerm = document.getElementById('packageSearch').value.toLowerCase();
+    const filteredPackages = AppStore.packages.filter(pkg => 
+      pkg.name.toLowerCase().includes(searchTerm) ||
+      pkg.owner.toLowerCase().includes(searchTerm) ||
+      pkg.status.toLowerCase().includes(searchTerm)
+    );
+
+    document.getElementById('packageList').innerHTML = filteredPackages.map(pkg => `
+      <div class="list-group-item list-group-item-action package-item" data-package-id="${pkg.id}" onclick="ChatView.selectPackage(${pkg.id})">
+        <div class="d-flex align-items-center">
+          <div class="package-number ${pkg.type} me-3">
+            ${pkg.id}
+          </div>
+          <div class="flex-grow-1">
+            <div class="fw-bold">${pkg.name}</div>
+            <div class="text-muted small">
+              <span class="status-badge status-${pkg.status.toLowerCase().replace(/\s+/g, '-')}">${pkg.status}</span>
+              <span class="ms-2">Owner: ${pkg.owner}</span>
+            </div>
+            <div class="text-muted small">Created: ${pkg.created}</div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  },
+
+  confirmPackageAttachment() {
+    if (!this.selectedPackage) {
+      this.showToast('Please select a package to attach', 'error');
+      return;
+    }
+
+    const conversation = AppStore.getConversationById(AppStore.selectedConversationId);
+    const confirmMessage = `Are you sure you want to attach "${conversation.name}" to package "${this.selectedPackage.name}"?`;
+    
+    this.showConfirmation(
+      'Attach to Package',
+      confirmMessage,
+      'fas fa-paperclip text-primary',
+      () => {
+        // Attach the package
+        AppStore.attachConversationToPackage(AppStore.selectedConversationId, this.selectedPackage.id);
+        
+        // Close modal
+        bootstrap.Modal.getInstance(document.getElementById('attachPackageModal')).hide();
+        
+        // Re-render to show updated conversation
+        App.render();
+        
+        // Show success message
+        this.showToast(`Conversation successfully attached to package "${this.selectedPackage.name}"`, 'success');
+      }
+    );
+  },
+
+  renderInternalUserList() {
+    const conversation = AppStore.getConversationById(AppStore.selectedConversationId);
+    const existingParticipantIds = conversation.participants.map(p => p.id);
+    
+    return AppStore.allUsers
+      .filter(user => user.id !== AppStore.currentUser.id && !existingParticipantIds.includes(user.id))
+      .map(user => `
+        <div class="list-group-item list-group-item-action internal-user-item" data-user-id="${user.id}" onclick="ChatView.selectInternalUser(${user.id})">
+          <div class="d-flex align-items-center">
+            <div class="participant-avatar ${user.avatarClass} me-3">${user.initials}</div>
+            <div>
+              <div class="fw-bold">${user.name}</div>
+              <small class="text-muted">${user.email}</small>
+              <div><small class="text-muted">${user.role}</small></div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+  },
+
+  switchToInternalTab() {
+    this.updateSelectedParticipantsDisplay();
+  },
+
+  switchToExternalTab() {
+    this.updateSelectedParticipantsDisplay();
+  },
+
+  selectInternalUser(userId) {
+    const userItem = document.querySelector(`[data-user-id="${userId}"]`);
+    const user = AppStore.getUserById(userId);
+    
+    if (userItem.classList.contains('selected')) {
+      // Deselect
+      userItem.classList.remove('selected');
+      this.selectedInternalUsers = this.selectedInternalUsers.filter(u => u.id !== userId);
+    } else {
+      // Select
+      userItem.classList.add('selected');
+      this.selectedInternalUsers.push({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        type: 'internal',
+        initials: user.initials,
+        avatarClass: user.avatarClass
+      });
+    }
+    
+    this.updateSelectedParticipantsDisplay();
+  },
+
+  addExternalParticipant() {
+    const name = document.getElementById('externalName').value.trim();
+    const email = document.getElementById('externalEmail').value.trim();
+    const role = document.getElementById('externalRole').value.trim() || 'External User';
+    
+    if (!name || !email) {
+      this.showToast('Please enter both name and email for external participant', 'error');
+      return;
+    }
+    
+    // Check if email already exists
+    if (this.selectedExternalUsers.some(u => u.email === email)) {
+      this.showToast('This email is already added', 'error');
+      return;
+    }
+    
+    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+    const avatarClasses = ['avatar-blue', 'avatar-orange', 'avatar-green', 'avatar-purple'];
+    const avatarClass = avatarClasses[Math.floor(Math.random() * avatarClasses.length)];
+    
+    const externalUser = {
+      id: Date.now(), // Temporary ID
+      name: name,
+      email: email,
+      role: role,
+      type: 'external',
+      initials: initials,
+      avatarClass: avatarClass
+    };
+    
+    this.selectedExternalUsers.push(externalUser);
+    
+    // Clear form
+    document.getElementById('externalName').value = '';
+    document.getElementById('externalEmail').value = '';
+    document.getElementById('externalRole').value = '';
+    
+    this.updateExternalParticipantsList();
+    this.updateSelectedParticipantsDisplay();
+  },
+
+  updateExternalParticipantsList() {
+    const container = document.getElementById('externalParticipantsList');
+    if (this.selectedExternalUsers.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+    
+    container.innerHTML = `
+      <h6>Added External Participants:</h6>
+      <div class="list-group">
+        ${this.selectedExternalUsers.map(user => `
+          <div class="list-group-item d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+              <div class="participant-avatar ${user.avatarClass} me-3">${user.initials}</div>
+              <div>
+                <div class="fw-bold">${user.name}</div>
+                <small class="text-muted">${user.email}</small>
+                <div><small class="text-muted">${user.role}</small></div>
+              </div>
+            </div>
+            <button class="btn btn-sm btn-outline-danger" onclick="ChatView.removeExternalParticipant(${user.id})">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  },
+
+  removeExternalParticipant(userId) {
+    this.selectedExternalUsers = this.selectedExternalUsers.filter(u => u.id !== userId);
+    this.updateExternalParticipantsList();
+    this.updateSelectedParticipantsDisplay();
+  },
+
+  updateSelectedParticipantsDisplay() {
+    const totalSelected = this.selectedInternalUsers.length + this.selectedExternalUsers.length;
+    const section = document.getElementById('selectedParticipantsSection');
+    const btn = document.getElementById('addParticipantsBtn');
+    
+    if (totalSelected === 0) {
+      section.style.display = 'none';
+      btn.disabled = true;
+      return;
+    }
+    
+    section.style.display = 'block';
+    btn.disabled = false;
+    
+    const container = document.getElementById('selectedParticipantsList');
+    const allSelected = [...this.selectedInternalUsers, ...this.selectedExternalUsers];
+    
+    container.innerHTML = allSelected.map(user => `
+      <span class="badge bg-primary">
+        <i class="fas fa-${user.type === 'internal' ? 'user' : 'user-plus'} me-1"></i>
+        ${user.name}
+      </span>
+    `).join('');
+  },
+
+  filterInternalUsers() {
+    const searchTerm = document.getElementById('internalSearch').value.toLowerCase();
+    const conversation = AppStore.getConversationById(AppStore.selectedConversationId);
+    const existingParticipantIds = conversation.participants.map(p => p.id);
+    
+    const filteredUsers = AppStore.allUsers
+      .filter(user => user.id !== AppStore.currentUser.id && !existingParticipantIds.includes(user.id))
+      .filter(user => 
+        user.name.toLowerCase().includes(searchTerm) ||
+        user.email.toLowerCase().includes(searchTerm) ||
+        user.role.toLowerCase().includes(searchTerm)
+      );
+
+    document.getElementById('internalUserList').innerHTML = filteredUsers.map(user => `
+      <div class="list-group-item list-group-item-action internal-user-item ${this.selectedInternalUsers.some(u => u.id === user.id) ? 'selected' : ''}" data-user-id="${user.id}" onclick="ChatView.selectInternalUser(${user.id})">
+        <div class="d-flex align-items-center">
+          <div class="participant-avatar ${user.avatarClass} me-3">${user.initials}</div>
+          <div>
+            <div class="fw-bold">${user.name}</div>
+            <small class="text-muted">${user.email}</small>
+            <div><small class="text-muted">${user.role}</small></div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  },
+
+  clearParticipantSelections() {
+    document.querySelectorAll('.internal-user-item').forEach(item => {
+      item.classList.remove('selected');
+    });
+    this.selectedInternalUsers = [];
+    this.selectedExternalUsers = [];
+  },
+
+  confirmAddParticipants() {
+    const totalSelected = this.selectedInternalUsers.length + this.selectedExternalUsers.length;
+    if (totalSelected === 0) {
+      this.showToast('Please select at least one participant to add', 'error');
+      return;
+    }
+
+    const conversation = AppStore.getConversationById(AppStore.selectedConversationId);
+    const participantNames = [...this.selectedInternalUsers, ...this.selectedExternalUsers].map(p => p.name).join(', ');
+    const confirmMessage = `Are you sure you want to add the following participants to "${conversation.name}"?\n\n${participantNames}`;
+    
+    this.showConfirmation(
+      'Add Participants',
+      confirmMessage,
+      'fas fa-user-plus text-primary',
+      () => {
+        // Add participants to conversation
+        AppStore.addParticipantsToConversation(AppStore.selectedConversationId, [...this.selectedInternalUsers, ...this.selectedExternalUsers]);
+        
+        // Close modal
+        bootstrap.Modal.getInstance(document.getElementById('addParticipantsModal')).hide();
+        
+        // Re-render to show updated conversation
+        App.render();
+        
+        // Show success message
+        this.showToast(`Successfully added ${totalSelected} participant${totalSelected > 1 ? 's' : ''} to the conversation`, 'success');
+      }
+    );
   }
 };
