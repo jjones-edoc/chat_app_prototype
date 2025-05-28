@@ -90,10 +90,18 @@ const PackagesView = {
       'Out For eSign': 'status-out',
       'Waiting for Doc': 'status-waiting',
       'Ready To Sign': 'status-ready',
-      'Reference': 'status-waiting'
+      'Completed': 'status-ready'
     }[pkg.status] || '';
 
-    const packageIcon = pkg.type === 'blue' ? '📁' : pkg.type === 'black' ? '📄' : '2';
+    // Status-based folder colors matching the live system
+    const packageIconColor = {
+      'Completed': 'green',
+      'Out For eSign': 'yellow', 
+      'Ready To Sign': 'orange',
+      'Waiting for Doc': 'gray'
+    }[pkg.status] || 'gray';
+
+    const packageNumber = pkg.id;
     const hasNewMessages = AppStore.getConversationsByPackageId(pkg.id).some(c => c.hasNewMessages);
     const chatCount = pkg.chatCount || 0;
 
@@ -102,7 +110,10 @@ const PackagesView = {
         <div class="row align-items-center">
           <div class="col-md-3">
             <div class="d-flex align-items-center">
-              <div class="package-number ${pkg.type}">${packageIcon}</div>
+              <div class="package-folder-icon ${packageIconColor}">
+                <i class="fas fa-folder"></i>
+                <span class="document-count">${packageNumber}</span>
+              </div>
               <div>
                 <div class="fw-bold">${pkg.name}</div>
               </div>

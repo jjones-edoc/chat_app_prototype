@@ -30,11 +30,11 @@ const AppStore = {
     {
       id: 2,
       name: "Home Equity Line - Sarah Miller",
-      status: "Reference",
+      status: "Completed",
       created: "05/21/2025",
-      modified: "",
+      modified: "05/21/2025",
       owner: "D.JONES",
-      type: "blue",
+      type: "green",
       hasChats: true,
       chatCount: 1,
       applicant: "Sarah Miller"
@@ -42,11 +42,11 @@ const AppStore = {
     {
       id: 3,
       name: "Auto Loan - Robert Chen",
-      status: "Reference",
+      status: "Completed",
       created: "05/21/2025",
-      modified: "",
+      modified: "05/21/2025",
       owner: "D.JONES",
-      type: "black",
+      type: "green",
       hasChats: false,
       chatCount: 0,
       applicant: "Robert Chen"
@@ -650,9 +650,71 @@ const AppStore = {
         isOwn: true,
         status: "sent"
       });
+
+      // Add automatic greeting from another participant
+      this.addAutomaticGreeting(newConversation.id);
     }
     
     return newConversation;
+  },
+
+  addAutomaticGreeting(conversationId) {
+    const conversation = this.getConversationById(conversationId);
+    if (!conversation) return;
+
+    // Find another participant to send greeting (not the current user)
+    const otherParticipant = conversation.participants.find(p => p.id !== this.currentUser.id);
+    
+    if (otherParticipant) {
+      const greetings = [
+        "Hi! Welcome to the conversation. I'm here to help with any questions you might have.",
+        "Hello! Thanks for starting this conversation. How can I assist you today?",
+        "Hi there! I've received your message and I'm ready to help you with this matter.",
+        "Welcome! I'm glad we can connect this way. What can I help you with?",
+        "Hello! I received your message and I'm here to assist you. What would you like to discuss?",
+        "Hi! Thanks for reaching out. I'm available to help answer any questions you have.",
+        "Hello and welcome! I'm here to provide support and answer any questions about your request."
+      ];
+
+      const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
+
+      // Add greeting message after a short delay to simulate real response
+      setTimeout(() => {
+        this.addMessage(conversationId, {
+          id: Date.now(),
+          conversationId: conversationId,
+          senderId: otherParticipant.id,
+          sender: otherParticipant.name,
+          senderInitials: otherParticipant.initials,
+          avatarClass: otherParticipant.avatarClass,
+          content: randomGreeting,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          timestamp: new Date(),
+          isOwn: false,
+          status: "delivered"
+        });
+
+        // Update conversation's last message
+        conversation.lastMessage = randomGreeting;
+        conversation.lastActivity = "just now";
+
+        // Refresh UI if this conversation is currently selected
+        if (this.selectedConversationId === conversationId && typeof App !== 'undefined') {
+          // Update messages area if it exists
+          const messagesArea = document.getElementById('messagesArea');
+          if (messagesArea && typeof ChatView !== 'undefined') {
+            messagesArea.innerHTML = ChatView.renderMessages(conversationId);
+            ChatView.scrollToBottom();
+          }
+          
+          // Update conversations list to show new last message
+          const conversationsList = document.getElementById('conversationsList');
+          if (conversationsList && typeof ChatView !== 'undefined') {
+            conversationsList.innerHTML = ChatView.renderConversationsList();
+          }
+        }
+      }, 1500); // 1.5 second delay to make it feel natural
+    }
   },
 
   generateChatLink(conversationId) {

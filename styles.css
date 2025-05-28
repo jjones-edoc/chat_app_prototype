@@ -132,47 +132,58 @@ body {
   background-color: #f8f9fa;
 }
 
-.package-number {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
+.package-folder-icon {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-weight: bold;
-  font-size: 14px;
   margin-right: 12px;
+  font-size: 28px;
+  width: 32px;
+  height: 32px;
 }
 
-.package-number.yellow {
-  background-color: var(--orange);
+.package-folder-icon.yellow {
+  color: rgb(248, 231, 28);
 }
-.package-number.blue {
-  background-color: var(--light-blue);
+.package-folder-icon.orange {
+  color: rgb(245, 166, 35);
 }
-.package-number.black {
-  background-color: #343a40;
+.package-folder-icon.green {
+  color: rgb(64, 180, 69);
+}
+.package-folder-icon.gray {
+  color: white;
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+}
+.package-folder-icon.blue {
+  color: rgb(64, 180, 69);
+}
+
+.document-count {
+  position: absolute;
+  top: 55%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-weight: bold;
+  font-size: 11px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+  z-index: 1;
+}
+
+.package-folder-icon.gray .document-count {
+  color: black;
+  text-shadow: none;
 }
 
 .status-badge {
-  font-size: 12px;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-weight: 500;
-}
-
-.status-out {
-  background-color: #fff3cd;
-  color: #856404;
-}
-.status-waiting {
-  background-color: #cce5ff;
-  color: #004085;
-}
-.status-ready {
-  background-color: #d4edda;
-  color: #155724;
+  font-size: inherit;
+  padding: 0;
+  border-radius: 0;
+  font-weight: normal;
+  background-color: transparent;
+  color: inherit;
 }
 
 .action-icon {
@@ -457,10 +468,15 @@ body {
   color: var(--gray);
   font-size: 18px;
   cursor: pointer;
-  padding: 8px;
+  padding: 0;
   border-radius: 50%;
   transition: all 0.2s;
   margin-left: 5px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .chat-menu-btn:hover, .package-icon-btn:hover {

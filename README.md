@@ -25,8 +25,8 @@ This is a single-page application prototype that demonstrates the interactions b
 - Owner-only management menu
 - Participant management
 
-### External User View
-- Simplified interface for external users
+### External Contact View
+- Simplified interface for external contacts
 - Simulates member accessing chat via secure link
 - Shows system notifications for new participants
 

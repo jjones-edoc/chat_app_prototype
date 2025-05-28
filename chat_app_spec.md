@@ -60,7 +60,7 @@ The eDOC Chat Platform prioritizes security at every level of interaction:
   - This may include verification codes sent to the member via email/text or the ability for the credit union staff to set up custom security questions with answers for the member to verify.
   - Verification answers will be stored securely.
 - **ID-Pal Verification (future phase):** We may also choose to enable ID-Pal verification in a future phase to help staff users verify members' identities.
-- **External User Accounts (future phase):** Full account creation for external users (with email, password, MFA) will be considered for future phases based on market feedback. Phase 1 will focus on streamlined link-based access.
+- **External Contact Accounts (future phase):** Full account creation for external contacts (with email, password, MFA) will be considered for future phases based on market feedback. Phase 1 will focus on streamlined link-based access.
 
 ### Data Protection
 
@@ -154,15 +154,15 @@ _[Image: Screenshot showing the interface for attaching a chat to a package]_
 
 ## Sharing Chat Links with External Members(Email)
 
-For external participants, the chat owner can share a secure chat link (valid for 90 days) via email. This allows participants outside the organization to join the conversation easily. The owner has the flexibility to customize the message content before sending.
+For external contacts, the chat owner can share a secure chat link (valid for 90 days) via email. This allows contacts outside the organization to join the conversation easily. The owner has the flexibility to customize the message content before sending.
 
-_[Image: Screenshot of the email sharing interface for external users]_
+_[Image: Screenshot of the email sharing interface for external contacts]_
 
 ## Sharing Chat Links with External Members(Text)
 
-Similar to email sharing, chat owners can also send secure chat links (valid for 90 days) via text message to external participants. This provides an alternative method of invitation for members who may prefer mobile communication.
+Similar to email sharing, chat owners can also send secure chat links (valid for 90 days) via text message to external contacts. This provides an alternative method of invitation for members who may prefer mobile communication.
 
-_[Image: Screenshot of the text message sharing interface for external users]_
+_[Image: Screenshot of the text message sharing interface for external contacts]_
 
 ## Switching Chat Ownership
 
@@ -184,13 +184,13 @@ _[Image: Screenshot showing the interface for closing a chat and attaching it to
 
 ## External Member View(Chat Link Access)
 
-When an external member receives a chat link, they are directed to a secure, simplified chat interface. Since each chat link is unique to a specific conversation, external participants will only see one chat at a time via a direct link, eliminating the need for a landing page to select between multiple chats. This view is designed for straightforward participation.
+When an external member receives a chat link, they are directed to a secure, simplified chat interface. Since each chat link is unique to a specific conversation, external contacts will only see one chat at a time via a direct link, eliminating the need for a landing page to select between multiple chats. This view is designed for straightforward participation.
 
-_[Image: Screenshot of the external user view after accessing via chat link]_
+_[Image: Screenshot of the external contact view after accessing via chat link]_
 
 ## Mobile View for External Members (Chat Link Access)
 
-The mobile view provides a responsive interface for external participants accessing the chat via smartphones or tablets, ensuring essential chat functions are accessible.
+The mobile view provides a responsive interface for external contacts accessing the chat via smartphones or tablets, ensuring essential chat functions are accessible.
 
 _[Image: Screenshot showing the chat interface on smartphone devices]_
 

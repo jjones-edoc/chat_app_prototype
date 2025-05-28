@@ -1,9 +1,9 @@
-// External User Chat View
+// External Contact Chat View
 const ExternalChatView = {
   render() {
-    // Simulate external user accessing via chat link
+    // Simulate external contact accessing via chat link
     const conversation = AppStore.getConversationById(AppStore.selectedConversationId);
-    const externalUser = conversation.participants.find(p => p.type === 'external');
+    const externalContact = conversation.participants.find(p => p.type === 'external');
     
     return `
       <div class="external-container">
@@ -66,7 +66,7 @@ const ExternalChatView = {
     `;
   },
 
-  renderMessages(conversation, externalUser) {
+  renderMessages(conversation, externalContact) {
     const messages = AppStore.getMessagesForConversation(conversation.id);
     
     if (messages.length === 0) {
@@ -77,13 +77,13 @@ const ExternalChatView = {
     let html = `
       <div class="system-notification">
         <span class="system-notification-badge">
-          <i class="fas fa-user-plus me-2"></i>${externalUser.name} joined the conversation
+          <i class="fas fa-user-plus me-2"></i>${externalContact.name} joined the conversation
         </span>
       </div>
     `;
     
     html += messages.map(msg => {
-      const isOwn = msg.senderId === externalUser.id;
+      const isOwn = msg.senderId === externalContact.id;
       
       return `
         <div class="message ${isOwn ? 'own' : ''}">
@@ -145,20 +145,20 @@ const ExternalChatView = {
     if (!message) return;
     
     const conversation = AppStore.getConversationById(AppStore.selectedConversationId);
-    const externalUser = conversation.participants.find(p => p.type === 'external');
+    const externalContact = conversation.participants.find(p => p.type === 'external');
     
-    // Add message as external user
+    // Add message as external contact
     const newMessage = {
       id: Date.now(),
       conversationId: AppStore.selectedConversationId,
-      senderId: externalUser.id,
-      sender: externalUser.name,
-      senderInitials: externalUser.initials,
-      avatarClass: externalUser.avatarClass,
+      senderId: externalContact.id,
+      sender: externalContact.name,
+      senderInitials: externalContact.initials,
+      avatarClass: externalContact.avatarClass,
       content: message,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       timestamp: new Date(),
-      isOwn: true, // From external user's perspective
+      isOwn: true, // From external contact's perspective
       status: 'sent'
     };
     
@@ -173,7 +173,7 @@ const ExternalChatView = {
     App.render();
     this.scrollToBottom();
     
-    // Simulate internal user response
+    // Simulate internal contact response
     setTimeout(() => {
       this.simulateInternalResponse();
     }, 2000);
@@ -215,7 +215,7 @@ const ExternalChatView = {
   },
 
   attachFile() {
-    this.showToast('External users can attach files to share documents with the credit union', 'info');
+    this.showToast('External contacts can attach files to share documents with the credit union', 'info');
   },
 
   scrollToBottom() {

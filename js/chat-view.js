@@ -16,10 +16,6 @@ const ChatView = {
                 </div>
               </div>
               <div class="col-4 text-center">
-                <div class="date-filter">
-                  <i class="fas fa-calendar-alt"></i>
-                  <input type="text" id="dateRangePicker" class="form-control" style="display: inline-block; width: auto; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; cursor: pointer;" readonly />
-                </div>
               </div>
               <div class="col-4 text-end">
                 <button class="btn btn-link text-white" onclick="App.navigateTo('packages')" title="Exit">
@@ -35,10 +31,12 @@ const ChatView = {
           <!-- Left Sidebar - Conversations -->
           <div class="conversations-sidebar">
             <div class="conversations-header">
-              <h5>Conversations</h5>
-              <button class="new-chat-btn" onclick="ChatView.createNewChat()">
-                <i class="fas fa-plus me-2"></i>New Chat
-              </button>
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">Conversations</h5>
+                <button class="package-icon-btn" onclick="ChatView.createNewChat()" title="New Conversation">
+                  <i class="fas fa-comment-medical"></i>
+                </button>
+              </div>
               <div class="search-box">
                 <i class="fas fa-search"></i>
                 <input type="text" placeholder="Search..." id="conversationSearch" onkeyup="ChatView.filterConversations()" />
@@ -307,7 +305,7 @@ const ChatView = {
                 </li>
                 <li class="nav-item" role="presentation">
                   <button class="nav-link" id="external-tab" data-bs-toggle="tab" data-bs-target="#external-pane" type="button" role="tab" onclick="ChatView.switchToExternalTab()">
-                    <i class="fas fa-user-plus me-2"></i>External Users
+                    <i class="fas fa-user-plus me-2"></i>External Contacts
                   </button>
                 </li>
               </ul>
@@ -336,10 +334,10 @@ const ChatView = {
                   </div>
                 </div>
 
-                <!-- External Users Tab -->
+                <!-- External Contacts Tab -->
                 <div class="tab-pane fade" id="external-pane" role="tabpanel">
                   <div class="mb-3">
-                    <label class="form-label">Add External Participant:</label>
+                    <label class="form-label">Add External Contact:</label>
                     <div class="row g-2">
                       <div class="col-md-6">
                         <input type="text" class="form-control" id="externalName" placeholder="Full Name">
@@ -352,11 +350,11 @@ const ChatView = {
                       <input type="text" class="form-control" id="externalRole" placeholder="Role/Title (optional)">
                     </div>
                     <button type="button" class="btn btn-outline-primary mt-2" onclick="ChatView.addExternalParticipant()">
-                      <i class="fas fa-plus me-2"></i>Add External User
+                      <i class="fas fa-plus me-2"></i>Add External Contact
                     </button>
                   </div>
                   <div id="externalParticipantsList">
-                    <!-- Added external participants will appear here -->
+                    <!-- Added external contacts will appear here -->
                   </div>
                 </div>
               </div>
@@ -805,49 +803,8 @@ const ChatView = {
       }
     });
 
-    // Initialize date range picker
-    setTimeout(() => {
-      const dateRangePicker = document.getElementById('dateRangePicker');
-      if (dateRangePicker && typeof $ !== 'undefined' && $.fn.daterangepicker) {
-        // Set default to last 7 days
-        const start = moment().subtract(6, 'days');
-        const end = moment();
-        
-        $(dateRangePicker).daterangepicker({
-          startDate: start,
-          endDate: end,
-          ranges: {
-            'Today': [moment(), moment()],
-            'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-            'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-            'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-            'This Month': [moment().startOf('month'), moment().endOf('month')],
-            'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
-            'All Time': [moment().subtract(10, 'years'), moment()]
-          },
-          alwaysShowCalendars: true,
-          opens: 'center',
-          drops: 'down',
-          buttonClasses: 'btn btn-sm',
-          applyButtonClasses: 'btn-primary',
-          cancelButtonClasses: 'btn-secondary'
-        }, function(start, end, label) {
-          console.log('Date range selected: ' + start.format('YYYY-MM-DD') + ' to ' + end.format('YYYY-MM-DD'));
-          // Here you can filter messages based on the selected date range
-          ChatView.filterMessagesByDateRange(start, end);
-        });
-        
-        // Set initial display text
-        $(dateRangePicker).val(start.format('MMM D, YYYY') + ' - ' + end.format('MMM D, YYYY'));
-      }
-    }, 100);
   },
 
-  filterMessagesByDateRange(startDate, endDate) {
-    // This function would filter the displayed messages based on the selected date range
-    console.log('Filtering messages from', startDate.format('YYYY-MM-DD'), 'to', endDate.format('YYYY-MM-DD'));
-    // Implementation would go here to filter messages in the current conversation
-  },
 
   getOwnerDesignation(conversation) {
     // Handle group ownership - show group abbreviation
@@ -1313,10 +1270,10 @@ const ChatView = {
   addExternalParticipant() {
     const name = document.getElementById('externalName').value.trim();
     const email = document.getElementById('externalEmail').value.trim();
-    const role = document.getElementById('externalRole').value.trim() || 'External User';
+    const role = document.getElementById('externalRole').value.trim() || 'External Contact';
     
     if (!name || !email) {
-      this.showToast('Please enter both name and email for external participant', 'error');
+      this.showToast('Please enter both name and email for external contact', 'error');
       return;
     }
     
@@ -1359,7 +1316,7 @@ const ChatView = {
     }
     
     container.innerHTML = `
-      <h6>Added External Participants:</h6>
+      <h6>Added External Contacts:</h6>
       <div class="list-group">
         ${this.selectedExternalUsers.map(user => `
           <div class="list-group-item d-flex align-items-center justify-content-between">
