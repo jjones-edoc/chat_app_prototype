@@ -58,8 +58,6 @@ const ChatView = {
             ${activeConversation ? this.renderChatArea(activeConversation) : this.renderEmptyState()}
           </div>
 
-          <!-- Right Sidebar - Package Details -->
-          ${activeConversation && activeConversation.packageId && this.isPackagePaneVisible() ? this.renderPackageSidebar(activeConversation) : ''}
         </div>
       </div>
 
@@ -69,6 +67,19 @@ const ChatView = {
 
       <!-- Toast Container -->
       <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer">
+      </div>
+
+      <!-- Package Details Bubble -->
+      <div class="package-details-bubble" id="packageDetailsBubble" style="display: none;">
+        <div class="package-bubble-header">
+          <h6>Package Details</h6>
+          <button class="bubble-close-btn" onclick="ChatView.hidePackageDetails()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="package-bubble-content" id="packageBubbleContent">
+          <!-- Package details will be loaded here -->
+        </div>
       </div>
     `;
   },
@@ -145,7 +156,10 @@ const ChatView = {
       <div class="chat-header-info">
         <div class="chat-title">
           <div>
-            <h4 id="chatTitle">${conversation.name}</h4>
+            <h4 id="chatTitle">
+              ${conversation.packageId ? `<button class="package-details-icon ${this.getPackageStatusColor(conversation.packageId)}" onclick="ChatView.showPackageDetails(event, ${conversation.packageId})" title="View Package Details"><i class="fas fa-folder"></i></button>` : ''}
+              ${conversation.name}
+            </h4>
             <div class="chat-participants" id="chatParticipants">
               <i class="fas fa-users me-1"></i>
               ${conversation.participants.map(p => p.name).join(', ')}
@@ -154,11 +168,6 @@ const ChatView = {
         </div>
         ${canManage ? `
           <div class="chat-management">
-            ${conversation.packageId ? `
-              <button class="package-icon-btn ${this.isPackagePaneVisible() ? 'active' : ''}" onclick="ChatView.togglePackagePane()" title="Toggle Package Details">
-                <i class="fas fa-box"></i>
-              </button>
-            ` : ''}
             <button class="chat-menu-btn" onclick="ChatView.toggleChatMenu()">
               <i class="fas fa-ellipsis-v"></i>
             </button>
@@ -251,46 +260,6 @@ const ChatView = {
     }).join('');
   },
 
-  renderPackageSidebar(conversation) {
-    const pkg = AppStore.getPackageById(conversation.packageId);
-    if (!pkg) return '';
-    
-    return `
-      <div class="package-sidebar">
-        <div class="package-header">
-          <h5>Package Details</h5>
-        </div>
-
-        <div class="p-3">
-          <div class="package-info">
-            <a href="#" class="package-name" onclick="ChatView.openPackage(${pkg.id})">
-              ${pkg.name}
-            </a>
-
-            <div class="package-detail">
-              <span class="label">Status</span>
-              <span class="value ${pkg.status === 'Completed' ? 'status-completed' : ''}">${pkg.status}</span>
-            </div>
-
-            <div class="package-detail">
-              <span class="label">Created</span>
-              <span class="value">${pkg.created}</span>
-            </div>
-
-            <div class="package-detail">
-              <span class="label">Modified</span>
-              <span class="value">${pkg.modified || '-'}</span>
-            </div>
-
-            <div class="package-detail">
-              <span class="label">Owner</span>
-              <span class="value">${pkg.owner}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-  },
 
   renderEmptyState() {
     return `
@@ -520,6 +489,91 @@ const ChatView = {
     `;
   },
 
+  // Package Details Functions
+  getPackageStatusColor(packageId) {
+    const pkg = AppStore.getPackageById(packageId);
+    if (!pkg) return 'gray';
+    
+    const statusColorMap = {
+      'Completed': 'green',
+      'Out For eSign': 'yellow', 
+      'Ready To Sign': 'orange',
+      'Waiting for Doc': 'gray'
+    };
+    
+    const color = statusColorMap[pkg.status] || 'gray';
+    return `status-${color}`;
+  },
+
+  showPackageDetails(event, packageId) {
+    // Prevent event bubbling to avoid triggering other clicks
+    event.stopPropagation();
+    
+    const pkg = AppStore.getPackageById(packageId);
+    if (!pkg) return;
+    
+    const bubble = document.getElementById('packageDetailsBubble');
+    const content = document.getElementById('packageBubbleContent');
+    
+    // Populate bubble content
+    content.innerHTML = `
+      <div class="package-info">
+        <a href="#" class="package-name" onclick="ChatView.openPackage(${pkg.id})">
+          ${pkg.name}
+        </a>
+
+        <div class="package-detail">
+          <span class="label">Status</span>
+          <span class="value ${pkg.status === 'Completed' ? 'status-completed' : ''}">${pkg.status}</span>
+        </div>
+
+        <div class="package-detail">
+          <span class="label">Created</span>
+          <span class="value">${pkg.created}</span>
+        </div>
+
+        <div class="package-detail">
+          <span class="label">Modified</span>
+          <span class="value">${pkg.modified || '-'}</span>
+        </div>
+
+        <div class="package-detail">
+          <span class="label">Owner</span>
+          <span class="value">${pkg.owner}</span>
+        </div>
+      </div>
+    `;
+    
+    // Position the bubble near the clicked button
+    const buttonRect = event.target.closest('.package-details-icon').getBoundingClientRect();
+    bubble.style.left = (buttonRect.left + buttonRect.width + 10) + 'px';
+    bubble.style.top = buttonRect.top + 'px';
+    
+    // Show the bubble
+    bubble.style.display = 'block';
+    
+    // Add click outside listener
+    setTimeout(() => {
+      document.addEventListener('click', this.handleClickOutside);
+    }, 0);
+  },
+
+  hidePackageDetails() {
+    const bubble = document.getElementById('packageDetailsBubble');
+    bubble.style.display = 'none';
+    document.removeEventListener('click', this.handleClickOutside);
+  },
+
+  handleClickOutside(event) {
+    const bubble = document.getElementById('packageDetailsBubble');
+    const isClickInsideBubble = bubble.contains(event.target);
+    const isClickOnPackageIcon = event.target.closest('.package-details-icon');
+    
+    if (!isClickInsideBubble && !isClickOnPackageIcon) {
+      ChatView.hidePackageDetails();
+    }
+  },
+
   // Event handlers
   selectConversation(conversationId) {
     AppStore.selectedConversationId = conversationId;
@@ -667,29 +721,6 @@ const ChatView = {
     App.navigateTo('packages');
   },
 
-  togglePackagePane() {
-    if (!this.packagePaneState) {
-      this.packagePaneState = {};
-    }
-    
-    const conversationId = AppStore.selectedConversationId;
-    this.packagePaneState[conversationId] = !this.packagePaneState[conversationId];
-    
-    // Preserve archive view state during render
-    const currentArchiveState = this.showArchived;
-    App.render();
-    this.showArchived = currentArchiveState;
-    this.updateArchiveToggleState();
-  },
-
-  isPackagePaneVisible() {
-    if (!this.packagePaneState) {
-      this.packagePaneState = {};
-    }
-    
-    const conversationId = AppStore.selectedConversationId;
-    return this.packagePaneState[conversationId] || false;
-  },
 
   handleKeyPress(event) {
     if (event.key === 'Enter' && !event.shiftKey) {

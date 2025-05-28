@@ -1173,3 +1173,164 @@ body {
     border-radius: 8px;
   }
 }
+
+/* Package Details Icon and Bubble Styles */
+.package-details-icon {
+  background: none;
+  border: none;
+  color: var(--orange);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+  margin-right: 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.package-details-icon:hover {
+  background: rgba(243, 156, 18, 0.1);
+  color: var(--orange);
+  transform: scale(1.1);
+}
+
+/* Status-based package icon colors */
+.package-details-icon.status-green {
+  color: var(--green);
+}
+
+.package-details-icon.status-green:hover {
+  background: rgba(40, 167, 69, 0.1);
+  color: var(--green);
+}
+
+.package-details-icon.status-yellow {
+  color: #ffc107;
+}
+
+.package-details-icon.status-yellow:hover {
+  background: rgba(255, 193, 7, 0.1);
+  color: #ffc107;
+}
+
+.package-details-icon.status-orange {
+  color: var(--orange);
+}
+
+.package-details-icon.status-orange:hover {
+  background: rgba(243, 156, 18, 0.1);
+  color: var(--orange);
+}
+
+.package-details-icon.status-gray {
+  color: var(--gray);
+}
+
+.package-details-icon.status-gray:hover {
+  background: rgba(108, 117, 125, 0.1);
+  color: var(--gray);
+}
+
+.package-details-bubble {
+  position: fixed;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1050;
+  min-width: 280px;
+  max-width: 350px;
+}
+
+.package-bubble-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--light-gray);
+  border-radius: 8px 8px 0 0;
+}
+
+.package-bubble-header h6 {
+  margin: 0;
+  color: var(--primary-blue);
+  font-weight: 600;
+  flex: 1;
+}
+
+.bubble-close-btn {
+  background: none;
+  border: none;
+  color: var(--gray);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.bubble-close-btn:hover {
+  background: rgba(108, 117, 125, 0.1);
+  color: var(--primary-blue);
+}
+
+.package-bubble-content {
+  padding: 16px;
+}
+
+.package-bubble-content .package-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.package-bubble-content .package-name {
+  font-weight: 600;
+  color: var(--primary-blue);
+  text-decoration: none;
+  font-size: 16px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.package-bubble-content .package-name:hover {
+  text-decoration: underline;
+}
+
+.package-bubble-content .package-detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.package-bubble-content .package-detail:last-child {
+  border-bottom: none;
+}
+
+.package-bubble-content .package-detail .label {
+  font-weight: 500;
+  color: var(--gray);
+  font-size: 14px;
+}
+
+.package-bubble-content .package-detail .value {
+  font-weight: 600;
+  color: var(--primary-blue);
+  font-size: 14px;
+}
+
+.package-bubble-content .package-detail .value.status-completed {
+  color: var(--green);
+}
