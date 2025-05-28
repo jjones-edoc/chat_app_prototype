@@ -1062,6 +1062,20 @@ body {
   opacity: 1;
 }
 
+/* Archive Status Indicators */
+.archive-warning, .deletion-warning {
+  margin-left: 5px;
+  font-size: 12px;
+}
+
+.archive-warning {
+  color: #f39c12;
+}
+
+.deletion-warning {
+  color: #dc3545;
+}
+
 /* Add Participants Modal Styles */
 .internal-user-item, .group-item {
   cursor: pointer;

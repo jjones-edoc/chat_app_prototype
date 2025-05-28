@@ -119,6 +119,7 @@ const AppStore = {
       ],
       lastActivity: "2 hours ago",
       lastMessage: "Thanks Jeff! I've received your W-2 forms",
+      lastActivityTimestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
       hasNewMessages: true,
       unreadCount: 3,
       ownerId: 100,
@@ -133,8 +134,9 @@ const AppStore = {
         { id: 2, name: "Sarah Johnson", type: "internal", initials: "SJ", avatarClass: "avatar-purple" },
         { id: 3, name: "Mike Chen", type: "internal", initials: "MC", avatarClass: "avatar-orange" }
       ],
-      lastActivity: "1 day ago",
+      lastActivity: "35 days ago",
       lastMessage: "Excellent work team! Jeff's loan is approved",
+      lastActivityTimestamp: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000),
       hasNewMessages: false,
       unreadCount: 0,
       ownerId: 100,
@@ -151,6 +153,7 @@ const AppStore = {
       ],
       lastActivity: "30 minutes ago",
       lastMessage: "Next step is the home appraisal - I'll schedule that for you",
+      lastActivityTimestamp: new Date(Date.now() - 30 * 60 * 1000),
       hasNewMessages: true,
       unreadCount: 1,
       ownerId: 'loan_officers',
@@ -167,8 +170,9 @@ const AppStore = {
         { id: 9, name: "Emily Watson", type: "external", initials: "EW", avatarClass: "avatar-orange" },
         { id: 10, name: "Amanda Brown", type: "internal", initials: "AB", avatarClass: "avatar-purple" }
       ],
-      lastActivity: "3 days ago",
+      lastActivity: "45 days ago",
       lastMessage: "Our premium member program offers even better rates - let me check your eligibility",
+      lastActivityTimestamp: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000),
       hasNewMessages: false,
       unreadCount: 0,
       ownerId: 100,
@@ -185,8 +189,26 @@ const AppStore = {
       ],
       lastActivity: "15 minutes ago",
       lastMessage: "Thank you for the information! I'll consider my options.",
+      lastActivityTimestamp: new Date(Date.now() - 15 * 60 * 1000),
       hasNewMessages: true,
       unreadCount: 2,
+      ownerId: 100,
+      isActive: true
+    },
+    {
+      id: 502,
+      name: "Maria Gonzalez - Checking Account Inquiry",
+      packageId: null,
+      packageName: null,
+      participants: [
+        { id: 16, name: "Maria Gonzalez", type: "external", initials: "MG", avatarClass: "avatar-purple" },
+        { id: 100, name: "David Jones", type: "internal", initials: "DJ", avatarClass: "avatar-green" }
+      ],
+      lastActivity: "12 days ago",
+      lastMessage: "Thank you for helping me set up online banking.",
+      lastActivityTimestamp: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000),
+      hasNewMessages: false,
+      unreadCount: 0,
       ownerId: 100,
       isActive: true
     }
@@ -520,6 +542,47 @@ const AppStore = {
         isOwn: false,
         status: "delivered"
       }
+    ],
+    502: [
+      {
+        id: 1,
+        conversationId: 502,
+        senderId: 16,
+        sender: "Maria Gonzalez",
+        senderInitials: "MG",
+        avatarClass: "avatar-purple",
+        content: "Hi, I'm having trouble logging into my online banking account. Can you help me?",
+        time: "12 days ago",
+        timestamp: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000),
+        isOwn: false,
+        status: "read"
+      },
+      {
+        id: 2,
+        conversationId: 502,
+        senderId: 100,
+        sender: "David Jones",
+        senderInitials: "DJ",
+        avatarClass: "avatar-green",
+        content: "I'd be happy to help you with that. Let me reset your password and walk you through the login process.",
+        time: "12 days ago",
+        timestamp: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000 + 5 * 60 * 1000),
+        isOwn: true,
+        status: "delivered"
+      },
+      {
+        id: 3,
+        conversationId: 502,
+        senderId: 16,
+        sender: "Maria Gonzalez",
+        senderInitials: "MG",
+        avatarClass: "avatar-purple",
+        content: "Thank you for helping me set up online banking.",
+        time: "12 days ago",
+        timestamp: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000 + 10 * 60 * 1000),
+        isOwn: false,
+        status: "delivered"
+      }
     ]
   },
 
@@ -578,6 +641,10 @@ const AppStore = {
     { id: 303, name: "Jessica Kim", email: "jessica.kim@creditunion.com", role: "Teller", initials: "JK", avatarClass: "avatar-blue", groupMemberships: ['tellers'] }
   ],
 
+  // Auto-archive settings
+  autoArchiveAfterDays: 10,
+  deleteAfterDays: 90,
+
   // Currently selected items
   selectedPackageId: null,
   selectedConversationId: 101,
@@ -586,6 +653,14 @@ const AppStore = {
   externalChatLink: null,
 
   // Helper methods
+  sortConversationsByActivity(conversations) {
+    return conversations.sort((a, b) => {
+      const timeA = a.lastActivityTimestamp || new Date(0);
+      const timeB = b.lastActivityTimestamp || new Date(0);
+      return timeB - timeA; // Most recent first
+    });
+  },
+
   getPackageById(id) {
     return this.packages.find(p => p.id === id);
   },
@@ -608,11 +683,15 @@ const AppStore = {
     }
     this.messages[conversationId].push(message);
     
-    // Update conversation last message
+    // Update conversation last message and timestamp
     const conversation = this.getConversationById(conversationId);
     if (conversation) {
       conversation.lastMessage = message.content;
       conversation.lastActivity = "just now";
+      conversation.lastActivityTimestamp = new Date();
+      
+      // Re-sort conversations array to maintain proper order
+      this.conversations = this.sortConversationsByActivity(this.conversations);
     }
   },
 
@@ -625,6 +704,7 @@ const AppStore = {
       participants: data.participants,
       lastActivity: "just now",
       lastMessage: data.initialMessage || "Conversation started",
+      lastActivityTimestamp: new Date(),
       hasNewMessages: false,
       unreadCount: 0,
       ownerId: this.currentUser.id,
@@ -890,5 +970,96 @@ const AppStore = {
     }
     
     return false;
+  },
+
+  // Auto-archive functionality
+  checkAndArchiveInactiveConversations() {
+    const now = new Date();
+    let archivedCount = 0;
+    
+    this.conversations.forEach(conversation => {
+      // Only check active conversations
+      if (conversation.isActive !== false) {
+        const daysSinceActivity = this.getDaysSinceTimestamp(conversation.lastActivityTimestamp || now);
+        
+        if (daysSinceActivity >= this.autoArchiveAfterDays) {
+          conversation.isActive = false;
+          archivedCount++;
+          
+          // Add system message about auto-archiving
+          this.addMessage(conversation.id, {
+            id: Date.now() + Math.random(),
+            conversationId: conversation.id,
+            senderId: 'system',
+            sender: 'System',
+            senderInitials: 'SYS',
+            avatarClass: 'avatar-system',
+            content: `Conversation automatically archived after ${daysSinceActivity} days of inactivity`,
+            time: "just now",
+            timestamp: now,
+            isOwn: false,
+            isSystem: true,
+            status: "delivered"
+          });
+        }
+      }
+    });
+    
+    return archivedCount;
+  },
+
+  // Clean up very old conversations (90+ days)
+  cleanupOldConversations() {
+    const now = new Date();
+    let deletedCount = 0;
+    
+    this.conversations = this.conversations.filter(conversation => {
+      if (conversation.isActive === false) {
+        const daysSinceActivity = this.getDaysSinceTimestamp(conversation.lastActivityTimestamp || now);
+        
+        if (daysSinceActivity >= this.deleteAfterDays) {
+          // Delete messages for this conversation
+          delete this.messages[conversation.id];
+          deletedCount++;
+          return false; // Remove from conversations array
+        }
+      }
+      return true; // Keep the conversation
+    });
+    
+    return deletedCount;
+  },
+
+  getDaysSinceTimestamp(timestamp) {
+    const now = new Date();
+    const diffTime = Math.abs(now - timestamp);
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  },
+
+  // Get archive status for display
+  getConversationArchiveInfo(conversation) {
+    if (!conversation.lastActivityTimestamp) {
+      return null;
+    }
+    
+    const daysSinceActivity = this.getDaysSinceTimestamp(conversation.lastActivityTimestamp);
+    
+    if (conversation.isActive === false) {
+      const daysUntilDeletion = this.deleteAfterDays - daysSinceActivity;
+      return {
+        status: 'archived',
+        daysSinceActivity: daysSinceActivity,
+        daysUntilDeletion: Math.max(0, daysUntilDeletion),
+        autoArchived: daysSinceActivity >= this.autoArchiveAfterDays
+      };
+    } else {
+      const daysUntilAutoArchive = this.autoArchiveAfterDays - daysSinceActivity;
+      return {
+        status: 'active',
+        daysSinceActivity: daysSinceActivity,
+        daysUntilAutoArchive: Math.max(0, daysUntilAutoArchive),
+        willAutoArchive: daysUntilAutoArchive <= 0
+      };
+    }
   }
 };
