@@ -80,26 +80,26 @@ const AppStore = {
   // Package participants (external contacts are the loan applicants, internal users provide service)
   packageParticipants: {
     1: [ // Jeff Johnson Loan Application
-      { id: 1, name: "Jeff Johnson", email: "jeff.johnson@email.com", role: "Loan Applicant", type: "external" },
+      { id: 1, name: "Jeff Johnson", email: "jeff.johnson@email.com", role: "Loan Applicant", type: "external", securityQuestion: "mothers_maiden_name", securityAnswer: "smith", verificationAttempts: 0, isLinkValid: true },
       { id: 2, name: "Sarah Johnson", email: "sarah.johnson@creditunion.com", role: "Loan Officer", type: "internal" },
       { id: 3, name: "Mike Chen", email: "mike.chen@creditunion.com", role: "Underwriter", type: "internal" }
     ],
     2: [ // Sarah Miller Home Equity
-      { id: 4, name: "Sarah Miller", email: "sarah.miller@email.com", role: "Member", type: "external" },
+      { id: 4, name: "Sarah Miller", email: "sarah.miller@email.com", role: "Member", type: "external", securityQuestion: "current_phone", securityAnswer: "555-123-4567", verificationAttempts: 0, isLinkValid: true },
       { id: 5, name: "Lisa Rodriguez", email: "lisa.rodriguez@creditunion.com", role: "Loan Officer", type: "internal" }
     ],
     3: [ // Robert Chen Auto Loan
-      { id: 7, name: "Robert Chen", email: "robert.chen@email.com", role: "Auto Loan Applicant", type: "external" },
+      { id: 7, name: "Robert Chen", email: "robert.chen@email.com", role: "Auto Loan Applicant", type: "external", securityQuestion: "birth_city", securityAnswer: "chicago", verificationAttempts: 0, isLinkValid: true },
       { id: 8, name: "John Smith", email: "john.smith@creditunion.com", role: "Loan Officer", type: "internal" },
       { id: 14, name: "Mary Garcia", email: "mary.garcia@creditunion.com", role: "Auto Loan Specialist", type: "internal" }
     ],
     4: [ // Emily Watson Mortgage Refi
-      { id: 9, name: "Emily Watson", email: "emily.watson@email.com", role: "Mortgage Applicant", type: "external" },
+      { id: 9, name: "Emily Watson", email: "emily.watson@email.com", role: "Mortgage Applicant", type: "external", securityQuestion: "first_pet", securityAnswer: "buddy", verificationAttempts: 0, isLinkValid: true },
       { id: 10, name: "Amanda Brown", email: "amanda.brown@creditunion.com", role: "Loan Officer", type: "internal" },
       { id: 15, name: "James Lee", email: "james.lee@creditunion.com", role: "Mortgage Specialist", type: "internal" }
     ],
     5: [ // Michael Davis Business Loan
-      { id: 11, name: "Michael Davis", email: "michael.davis@email.com", role: "Business Owner", type: "external" },
+      { id: 11, name: "Michael Davis", email: "michael.davis@email.com", role: "Business Owner", type: "external", securityQuestion: "high_school", securityAnswer: "lincoln high", verificationAttempts: 0, isLinkValid: true },
       { id: 12, name: "Tom Wilson", email: "tom.wilson@creditunion.com", role: "Business Loan Officer", type: "internal" },
       { id: 13, name: "Rachel Adams", email: "rachel.adams@creditunion.com", role: "Processor", type: "internal" }
     ]
@@ -113,7 +113,7 @@ const AppStore = {
       packageId: 1,
       packageName: "Personal Loan Application - Jeff Johnson",
       participants: [
-        { id: 1, name: "Jeff Johnson", type: "external", initials: "JJ", avatarClass: "avatar-blue" },
+        { id: 1, name: "Jeff Johnson", type: "external", initials: "JJ", avatarClass: "avatar-blue", securityQuestion: "mothers_maiden_name", securityAnswer: "smith", verificationAttempts: 0, isLinkValid: true },
         { id: 2, name: "Sarah Johnson", type: "internal", initials: "SJ", avatarClass: "avatar-purple" },
         { id: 3, name: "Mike Chen", type: "internal", initials: "MC", avatarClass: "avatar-orange" }
       ],
@@ -148,7 +148,7 @@ const AppStore = {
       packageId: 2,
       packageName: "Home Equity Line - Sarah Miller",
       participants: [
-        { id: 4, name: "Sarah Miller", type: "external", initials: "SM", avatarClass: "avatar-green" },
+        { id: 4, name: "Sarah Miller", type: "external", initials: "SM", avatarClass: "avatar-green", securityQuestion: "current_phone", securityAnswer: "555-123-4567", verificationAttempts: 0, isLinkValid: true },
         { id: 5, name: "Lisa Rodriguez", type: "internal", initials: "LR", avatarClass: "avatar-blue" }
       ],
       lastActivity: "30 minutes ago",
@@ -167,7 +167,7 @@ const AppStore = {
       packageId: 4,
       packageName: "Mortgage Refinance - Emily Watson",
       participants: [
-        { id: 9, name: "Emily Watson", type: "external", initials: "EW", avatarClass: "avatar-orange" },
+        { id: 9, name: "Emily Watson", type: "external", initials: "EW", avatarClass: "avatar-orange", securityQuestion: "first_pet", securityAnswer: "buddy", verificationAttempts: 0, isLinkValid: true },
         { id: 10, name: "Amanda Brown", type: "internal", initials: "AB", avatarClass: "avatar-purple" }
       ],
       lastActivity: "45 days ago",
@@ -184,7 +184,7 @@ const AppStore = {
       packageId: null,
       packageName: null,
       participants: [
-        { id: 7, name: "Robert Chen", type: "external", initials: "RC", avatarClass: "avatar-blue" },
+        { id: 7, name: "Robert Chen", type: "external", initials: "RC", avatarClass: "avatar-blue", securityQuestion: "birth_city", securityAnswer: "chicago", verificationAttempts: 0, isLinkValid: true },
         { id: 100, name: "David Jones", type: "internal", initials: "DJ", avatarClass: "avatar-green" }
       ],
       lastActivity: "15 minutes ago",
@@ -201,7 +201,7 @@ const AppStore = {
       packageId: null,
       packageName: null,
       participants: [
-        { id: 16, name: "Maria Gonzalez", type: "external", initials: "MG", avatarClass: "avatar-purple" },
+        { id: 16, name: "Maria Gonzalez", type: "external", initials: "MG", avatarClass: "avatar-purple", securityQuestion: "favorite_color", securityAnswer: "blue", verificationAttempts: 0, isLinkValid: true },
         { id: 100, name: "David Jones", type: "internal", initials: "DJ", avatarClass: "avatar-green" }
       ],
       lastActivity: "12 days ago",
@@ -648,6 +648,7 @@ const AppStore = {
   // Currently selected items
   selectedPackageId: null,
   selectedConversationId: 101,
+  selectedExternalContactId: null,
   
   // External chat link data
   externalChatLink: null,
@@ -957,11 +958,12 @@ const AppStore = {
           sender: 'System',
           senderInitials: 'SYS',
           avatarClass: 'avatar-system',
-          content: `${allNames.join(', ')} ${allNames.length > 1 ? 'have' : 'has'} been added to the conversation`,
+          content: `${allNames.join(', ')} ${allNames.length > 1 ? 'have' : 'has'} joined the conversation`,
           time: "just now",
           timestamp: new Date(),
           isOwn: false,
           isSystem: true,
+          isJoinMessage: true,
           status: "delivered"
         });
       }
@@ -995,6 +997,43 @@ const AppStore = {
             senderInitials: 'SYS',
             avatarClass: 'avatar-system',
             content: `Conversation automatically archived after ${daysSinceActivity} days of inactivity`,
+            time: "just now",
+            timestamp: now,
+            isOwn: false,
+            isSystem: true,
+            status: "delivered"
+          });
+        }
+      }
+    });
+    
+    return archivedCount;
+  },
+
+  // Force archive conversations older than 10 days
+  archiveOldConversations() {
+    const now = new Date();
+    let archivedCount = 0;
+    
+    this.conversations.forEach(conversation => {
+      // Only check active conversations
+      if (conversation.isActive !== false) {
+        const daysSinceActivity = this.getDaysSinceTimestamp(conversation.lastActivityTimestamp || now);
+        
+        // Archive conversations older than 10 days
+        if (daysSinceActivity >= 10) {
+          conversation.isActive = false;
+          archivedCount++;
+          
+          // Add system message about archiving
+          this.addMessage(conversation.id, {
+            id: Date.now() + Math.random(),
+            conversationId: conversation.id,
+            senderId: 'system',
+            sender: 'System',
+            senderInitials: 'SYS',
+            avatarClass: 'avatar-system',
+            content: `Conversation archived after ${daysSinceActivity} days of inactivity`,
             time: "just now",
             timestamp: now,
             isOwn: false,
@@ -1061,5 +1100,32 @@ const AppStore = {
         willAutoArchive: daysUntilAutoArchive <= 0
       };
     }
+  },
+
+  deleteConversation(conversationId) {
+    // Get conversation before deleting to update package info
+    const conversationToDelete = this.getConversationById(conversationId);
+    
+    // Remove conversation from conversations array
+    const conversationIndex = this.conversations.findIndex(c => c.id === conversationId);
+    if (conversationIndex !== -1) {
+      this.conversations.splice(conversationIndex, 1);
+    }
+    
+    // Delete messages for this conversation
+    delete this.messages[conversationId];
+    
+    // Update package chat count if conversation was attached to a package
+    if (conversationToDelete && conversationToDelete.packageId) {
+      const pkg = this.getPackageById(conversationToDelete.packageId);
+      if (pkg && pkg.chatCount > 0) {
+        pkg.chatCount--;
+        if (pkg.chatCount === 0) {
+          pkg.hasChats = false;
+        }
+      }
+    }
+    
+    return true;
   }
 };

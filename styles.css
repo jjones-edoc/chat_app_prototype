@@ -96,6 +96,80 @@ body {
   margin-right: 10px;
 }
 
+/* External Chat Verification Styles */
+.verification-main {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+  padding: 20px;
+}
+
+.verification-card {
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+}
+
+.verification-header {
+  margin-bottom: 30px;
+}
+
+.verification-form {
+  text-align: left;
+}
+
+.security-question-box {
+  background-color: var(--light-gray);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 15px;
+  font-weight: 500;
+  color: var(--primary-blue);
+  margin-bottom: 10px;
+}
+
+.verification-info {
+  border-top: 1px solid var(--border-color);
+  padding-top: 20px;
+}
+
+.external-header {
+  background: linear-gradient(135deg, var(--primary-blue), var(--light-blue));
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+.external-container {
+  min-height: 100vh;
+  background-color: var(--light-gray);
+}
+
+.external-chat-main {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 140px);
+  background: white;
+  margin: 0 20px;
+  border-radius: 10px 10px 0 0;
+  box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.1);
+}
+
+.external-info-banner {
+  background-color: #e8f4f8;
+  border: 1px solid #bee5eb;
+  border-radius: 8px;
+  padding: 15px;
+  margin: 20px;
+  text-align: center;
+  color: var(--primary-blue);
+}
+
 /* Package Management Styles */
 .menu-btn {
   background-color: var(--primary-blue);
@@ -1333,4 +1407,48 @@ body {
 
 .package-bubble-content .package-detail .value.status-completed {
   color: var(--green);
+}
+
+/* Join Message Styles */
+.join-message {
+  text-align: center;
+  margin: 20px 0;
+  padding: 0;
+}
+
+.join-message-content {
+  color: var(--gray);
+  font-size: 14px;
+  font-style: italic;
+  display: inline-block;
+  padding: 8px 0;
+}
+
+/* Disabled Chat Menu Item */
+.chat-menu-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+.chat-menu-item.disabled:hover {
+  background-color: transparent !important;
+}
+
+/* Archived Message Notice */
+.archived-message-notice {
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-top: 1px solid var(--border-color);
+}
+
+.archived-notice-content {
+  text-align: center;
+  color: var(--gray);
+  font-style: italic;
+  font-size: 14px;
+  padding: 10px;
+  background-color: #e9ecef;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
 }

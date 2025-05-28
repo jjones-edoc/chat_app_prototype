@@ -172,20 +172,22 @@ const ChatView = {
               <i class="fas fa-ellipsis-v"></i>
             </button>
             <div class="chat-menu" id="chatMenu">
-              <div class="chat-menu-item" onclick="ChatView.addToChat()">
-                <i class="fas fa-user-plus"></i>Add to Chat
-              </div>
-              ${!conversation.packageId ? `
-                <div class="chat-menu-item" onclick="ChatView.attachToPackage()">
-                  <i class="fas fa-paperclip"></i>Attach to Package
+              ${conversation.isActive !== false ? `
+                <div class="chat-menu-item" onclick="ChatView.addToChat()">
+                  <i class="fas fa-user-plus"></i>Add to Chat
+                </div>
+                ${!conversation.packageId ? `
+                  <div class="chat-menu-item" onclick="ChatView.attachToPackage()">
+                    <i class="fas fa-paperclip"></i>Attach to Package
+                  </div>
+                ` : ''}
+                <div class="chat-menu-item" onclick="ChatView.switchOwner()">
+                  <i class="fas fa-exchange-alt"></i>Switch Owner
+                </div>
+                <div class="chat-menu-item" onclick="ChatView.closeChat()">
+                  <i class="fas fa-archive"></i>Close Chat
                 </div>
               ` : ''}
-              <div class="chat-menu-item" onclick="ChatView.switchOwner()">
-                <i class="fas fa-exchange-alt"></i>Switch Owner
-              </div>
-              <div class="chat-menu-item" onclick="ChatView.closeChat()">
-                <i class="fas fa-archive"></i>Close Chat
-              </div>
               <div class="chat-menu-item danger" onclick="ChatView.deleteChat()">
                 <i class="fas fa-trash"></i>Delete Chat
               </div>
@@ -198,23 +200,32 @@ const ChatView = {
         ${this.renderMessages(conversation.id)}
       </div>
 
-      <div class="message-input-area">
-        <div class="message-input-container">
-          <textarea class="message-input" id="messageInput" 
-                    placeholder="Enter your text" rows="1"
-                    onkeypress="ChatView.handleKeyPress(event)"
-                    oninput="ChatView.handleInput()"></textarea>
-          <div class="input-actions">
-            <button class="input-btn send-btn" id="sendBtn" onclick="ChatView.sendMessage()" 
-                    title="Send Message" disabled>
-              <i class="fas fa-paper-plane"></i>
-            </button>
-            <button class="input-btn attachment-btn" onclick="ChatView.attachFile()" title="Attach File">
-              <i class="fas fa-paperclip"></i>
-            </button>
+      ${conversation.isActive !== false ? `
+        <div class="message-input-area">
+          <div class="message-input-container">
+            <textarea class="message-input" id="messageInput" 
+                      placeholder="Enter your text" rows="1"
+                      onkeypress="ChatView.handleKeyPress(event)"
+                      oninput="ChatView.handleInput()"></textarea>
+            <div class="input-actions">
+              <button class="input-btn send-btn" id="sendBtn" onclick="ChatView.sendMessage()" 
+                      title="Send Message" disabled>
+                <i class="fas fa-paper-plane"></i>
+              </button>
+              <button class="input-btn attachment-btn" onclick="ChatView.attachFile()" title="Attach File">
+                <i class="fas fa-paperclip"></i>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      ` : `
+        <div class="archived-message-notice">
+          <div class="archived-notice-content">
+            <i class="fas fa-archive me-2"></i>
+            This conversation is archived. No new messages can be sent.
+          </div>
+        </div>
+      `}
     `;
   },
 
@@ -227,6 +238,17 @@ const ChatView = {
     
     return messages.map(msg => {
       const isOwn = msg.senderId === AppStore.currentUser.id;
+      
+      // Check if this is a join message
+      if (msg.isJoinMessage && msg.isSystem) {
+        return `
+          <div class="join-message">
+            <div class="join-message-content">
+              ----- ${msg.content.replace(' joined the conversation', ' has joined the conversation')} -----
+            </div>
+          </div>
+        `;
+      }
       
       return `
         <div class="message ${isOwn ? 'own' : ''}">
@@ -340,6 +362,22 @@ const ChatView = {
                     </div>
                     <div class="mt-2">
                       <input type="text" class="form-control" id="externalRole" placeholder="Role/Title (optional)">
+                    </div>
+                    <div class="mt-2">
+                      <label class="form-label small">Security Question:</label>
+                      <select class="form-select form-select-sm" id="externalSecurityQuestion">
+                        <option value="">Select a security question</option>
+                        <option value="mothers_maiden_name">What is your mother's maiden name?</option>
+                        <option value="current_phone">What is your current phone number?</option>
+                        <option value="birth_city">What city were you born in?</option>
+                        <option value="first_pet">What was the name of your first pet?</option>
+                        <option value="high_school">What high school did you attend?</option>
+                        <option value="favorite_color">What is your favorite color?</option>
+                        <option value="street_grew_up">What street did you grow up on?</option>
+                      </select>
+                    </div>
+                    <div class="mt-2">
+                      <input type="text" class="form-control form-control-sm" id="externalSecurityAnswer" placeholder="Security answer">
                     </div>
                     <button type="button" class="btn btn-outline-primary mt-2" onclick="ChatView.addExternalParticipant()">
                       <i class="fas fa-plus me-2"></i>Add External Contact
@@ -703,11 +741,29 @@ const ChatView = {
 
   deleteChat() {
     this.toggleChatMenu();
+    const conversation = AppStore.getConversationById(AppStore.selectedConversationId);
     this.showConfirmation(
       'Delete Chat',
-      'Are you sure you want to permanently delete this chat? This action cannot be undone.',
+      `Are you sure you want to permanently delete "${conversation.name}"? This action cannot be undone.`,
       'fas fa-trash text-danger',
       () => {
+        // Delete the conversation
+        AppStore.deleteConversation(AppStore.selectedConversationId);
+        
+        // Select another conversation if available, otherwise clear selection
+        const remainingConversations = AppStore.conversations;
+        if (remainingConversations.length > 0) {
+          // Select the first available conversation
+          AppStore.selectedConversationId = remainingConversations[0].id;
+        } else {
+          // No conversations left, clear selection
+          AppStore.selectedConversationId = null;
+        }
+        
+        // Re-render the app
+        App.render();
+        
+        // Show success message
         this.showToast('Chat deleted permanently', 'success');
       }
     );
@@ -965,6 +1021,12 @@ const ChatView = {
   init() {
     // Initialize archive view state
     this.showArchived = false;
+    
+    // Archive conversations older than 10 days
+    const oldArchivedCount = AppStore.archiveOldConversations();
+    if (oldArchivedCount > 0) {
+      console.log(`Archived ${oldArchivedCount} conversations older than 10 days`);
+    }
     
     // Run auto-archive check
     const archivedCount = AppStore.checkAndArchiveInactiveConversations();
@@ -1466,9 +1528,16 @@ const ChatView = {
     const name = document.getElementById('externalName').value.trim();
     const email = document.getElementById('externalEmail').value.trim();
     const role = document.getElementById('externalRole').value.trim() || 'External Contact';
+    const securityQuestion = document.getElementById('externalSecurityQuestion').value;
+    const securityAnswer = document.getElementById('externalSecurityAnswer').value.trim();
     
     if (!name || !email) {
       this.showToast('Please enter both name and email for external contact', 'error');
+      return;
+    }
+    
+    if (!securityQuestion || !securityAnswer) {
+      this.showToast('Please select a security question and provide an answer', 'error');
       return;
     }
     
@@ -1489,7 +1558,11 @@ const ChatView = {
       role: role,
       type: 'external',
       initials: initials,
-      avatarClass: avatarClass
+      avatarClass: avatarClass,
+      securityQuestion: securityQuestion,
+      securityAnswer: securityAnswer.toLowerCase().trim(),
+      verificationAttempts: 0,
+      isLinkValid: true
     };
     
     this.selectedExternalUsers.push(externalUser);
@@ -1498,6 +1571,8 @@ const ChatView = {
     document.getElementById('externalName').value = '';
     document.getElementById('externalEmail').value = '';
     document.getElementById('externalRole').value = '';
+    document.getElementById('externalSecurityQuestion').value = '';
+    document.getElementById('externalSecurityAnswer').value = '';
     
     this.updateExternalParticipantsList();
     this.updateSelectedParticipantsDisplay();
@@ -1658,8 +1733,15 @@ const ChatView = {
         this.showArchived = currentArchiveState;
         this.updateArchiveToggleState();
         
-        // Show success message
-        this.showToast(`Successfully added ${totalSelected} participant${totalSelected > 1 ? 's' : ''} to the conversation`, 'success');
+        // Show success message with external contact link if applicable
+        const externalParticipants = allSelected.filter(p => p.type === 'external');
+        if (externalParticipants.length > 0) {
+          const firstExternal = externalParticipants[0];
+          const linkText = `<a href="#" onclick="AppStore.selectedExternalContactId = ${firstExternal.id}; App.navigateTo('external'); return false;" style="color: #0d6efd; text-decoration: underline; font-weight: bold;">View ${firstExternal.name}'s perspective</a>`;
+          this.showToast(`Successfully added ${totalSelected} participant${totalSelected > 1 ? 's' : ''} to the conversation. ${linkText}`, 'success');
+        } else {
+          this.showToast(`Successfully added ${totalSelected} participant${totalSelected > 1 ? 's' : ''} to the conversation`, 'success');
+        }
       }
     );
   }

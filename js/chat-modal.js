@@ -122,16 +122,47 @@ const ChatModal = {
                   <!-- External Contacts Panel -->
                   <div class="tab-pane fade" id="external-panel" role="tabpanel">
                     <div class="mb-3">
-                      <button type="button" class="btn btn-sm btn-outline-primary" onclick="ChatModal.showAddExternalContact()">
-                        <i class="fas fa-plus me-2"></i>Add New External Contact
+                      <label class="form-label">Add External Contact:</label>
+                      <div class="row g-2">
+                        <div class="col-md-6">
+                          <input type="text" class="form-control" id="modalExternalName" placeholder="Full Name">
+                        </div>
+                        <div class="col-md-6">
+                          <input type="email" class="form-control" id="modalExternalEmail" placeholder="Email Address">
+                        </div>
+                      </div>
+                      <div class="mt-2">
+                        <input type="text" class="form-control" id="modalExternalRole" placeholder="Role/Title (optional)">
+                      </div>
+                      <div class="mt-2">
+                        <label class="form-label small">Security Question:</label>
+                        <select class="form-select form-select-sm" id="modalExternalSecurityQuestion">
+                          <option value="">Select a security question</option>
+                          <option value="mothers_maiden_name">What is your mother's maiden name?</option>
+                          <option value="current_phone">What is your current phone number?</option>
+                          <option value="birth_city">What city were you born in?</option>
+                          <option value="first_pet">What was the name of your first pet?</option>
+                          <option value="high_school">What high school did you attend?</option>
+                          <option value="favorite_color">What is your favorite color?</option>
+                          <option value="street_grew_up">What street did you grow up on?</option>
+                        </select>
+                      </div>
+                      <div class="mt-2">
+                        <input type="text" class="form-control form-control-sm" id="modalExternalSecurityAnswer" placeholder="Security answer">
+                      </div>
+                      <button type="button" class="btn btn-outline-primary mt-2" onclick="ChatModal.addExternalParticipant()">
+                        <i class="fas fa-plus me-2"></i>Add External Contact
                       </button>
+                    </div>
+                    <div id="modalExternalParticipantsList">
+                      <!-- Added external contacts will appear here -->
                     </div>
                     <div class="search-box mb-3">
                       <i class="fas fa-search"></i>
-                      <input type="text" class="form-control ps-5" placeholder="Search external contacts..." 
+                      <input type="text" class="form-control ps-5" placeholder="Search existing external contacts..." 
                              onkeyup="ChatModal.filterParticipants('external')" id="externalSearch" />
                     </div>
-                    <div id="externalParticipantsList" style="max-height: 250px; overflow-y: auto;"></div>
+                    <div id="externalParticipantsList" style="max-height: 200px; overflow-y: auto;"></div>
                   </div>
                 </div>
 
@@ -183,43 +214,6 @@ const ChatModal = {
         </div>
       </div>
 
-      <!-- Add External Contact Modal -->
-      <div class="modal fade" id="addExternalContactModal" tabindex="-1">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Add External Contact</h5>
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <form id="externalContactForm">
-                <div class="mb-3">
-                  <label for="externalName" class="form-label">Name *</label>
-                  <input type="text" class="form-control" id="externalName" required />
-                </div>
-                <div class="mb-3">
-                  <label for="externalEmail" class="form-label">Email *</label>
-                  <input type="email" class="form-control" id="externalEmail" required />
-                </div>
-                <div class="mb-3">
-                  <label for="externalPhone" class="form-label">Phone (Optional)</label>
-                  <input type="tel" class="form-control" id="externalPhone" />
-                </div>
-                <div class="mb-3">
-                  <label for="externalRole" class="form-label">Role/Title</label>
-                  <input type="text" class="form-control" id="externalRole" placeholder="e.g., Member, Applicant, Business Owner" />
-                </div>
-              </form>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="button" class="btn btn-primary" onclick="ChatModal.addExternalContact()">
-                <i class="fas fa-plus me-2"></i>Add Contact
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
     `;
   },
 
@@ -480,41 +474,97 @@ const ChatModal = {
     }
   },
 
-  showAddExternalContact() {
-    new bootstrap.Modal(document.getElementById('addExternalContactModal')).show();
-  },
 
-  addExternalContact() {
-    const name = document.getElementById('externalName').value;
-    const email = document.getElementById('externalEmail').value;
-    const phone = document.getElementById('externalPhone').value;
-    const role = document.getElementById('externalRole').value || 'External Contact';
-
+  addExternalParticipant() {
+    const name = document.getElementById('modalExternalName').value.trim();
+    const email = document.getElementById('modalExternalEmail').value.trim();
+    const role = document.getElementById('modalExternalRole').value.trim() || 'External Contact';
+    const securityQuestion = document.getElementById('modalExternalSecurityQuestion').value;
+    const securityAnswer = document.getElementById('modalExternalSecurityAnswer').value.trim();
+    
     if (!name || !email) {
-      this.showToast('Please enter name and email', 'error');
+      this.showToast('Please enter both name and email for external contact', 'error');
       return;
     }
-
-    const newContact = {
+    
+    if (!securityQuestion || !securityAnswer) {
+      this.showToast('Please select a security question and provide an answer', 'error');
+      return;
+    }
+    
+    // Check if email already exists in selected participants
+    if (this.selectedParticipants.some(p => p.email === email)) {
+      this.showToast('This email is already added', 'error');
+      return;
+    }
+    
+    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+    const avatarClasses = ['avatar-blue', 'avatar-orange', 'avatar-green', 'avatar-purple'];
+    const avatarClass = avatarClasses[Math.floor(Math.random() * avatarClasses.length)];
+    
+    const externalUser = {
       id: Date.now(),
       name: name,
       email: email,
-      phone: phone,
       role: role,
-      type: 'external'
+      type: 'external',
+      initials: initials,
+      avatarClass: avatarClass,
+      securityQuestion: securityQuestion,
+      securityAnswer: securityAnswer.toLowerCase().trim(),
+      verificationAttempts: 0,
+      isLinkValid: true
     };
-
-    this.externalContacts.push(newContact);
     
-    // Close modal and refresh lists
-    bootstrap.Modal.getInstance(document.getElementById('addExternalContactModal')).hide();
-    this.loadAllParticipants();
+    // Add to selected participants directly
+    this.selectedParticipants.push(externalUser);
     
     // Clear form
-    document.getElementById('externalContactForm').reset();
+    document.getElementById('modalExternalName').value = '';
+    document.getElementById('modalExternalEmail').value = '';
+    document.getElementById('modalExternalRole').value = '';
+    document.getElementById('modalExternalSecurityQuestion').value = '';
+    document.getElementById('modalExternalSecurityAnswer').value = '';
     
-    // Switch to external tab
-    document.getElementById('external-tab').click();
+    this.updateModalExternalParticipantsList();
+    this.updateSelectedDisplay();
+  },
+
+  updateModalExternalParticipantsList() {
+    const container = document.getElementById('modalExternalParticipantsList');
+    const externalParticipants = this.selectedParticipants.filter(p => p.type === 'external');
+    
+    if (externalParticipants.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+    
+    container.innerHTML = `
+      <h6>Added External Contacts:</h6>
+      <div class="list-group">
+        ${externalParticipants.map(user => `
+          <div class="list-group-item d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+              <div class="participant-avatar ${user.avatarClass} me-3">${user.initials}</div>
+              <div>
+                <div class="fw-bold">${user.name}</div>
+                <small class="text-muted">${user.email}</small>
+                <div><small class="text-muted">${user.role}</small></div>
+              </div>
+            </div>
+            <button class="btn btn-sm btn-outline-danger" onclick="ChatModal.removeModalExternalParticipant(${user.id})">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  },
+
+  removeModalExternalParticipant(userId) {
+    this.selectedParticipants = this.selectedParticipants.filter(p => p.id !== userId);
+    this.updateModalExternalParticipantsList();
+    this.updateSelectedDisplay();
   },
 
   createChat() {
