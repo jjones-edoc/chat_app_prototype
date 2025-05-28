@@ -33,9 +33,14 @@ const ChatView = {
             <div class="conversations-header">
               <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="mb-0">Conversations</h5>
-                <button class="package-icon-btn" onclick="ChatView.createNewChat()" title="New Conversation">
-                  <i class="fas fa-comment-medical"></i>
-                </button>
+                <div class="d-flex align-items-center gap-2">
+                  <button class="archive-toggle-btn ${this.showArchived ? 'active' : ''}" onclick="ChatView.toggleArchivedView()" title="${this.showArchived ? 'Hide Archived' : 'Show Archived'}">
+                    <i class="fas fa-archive"></i>
+                  </button>
+                  <button class="package-icon-btn" onclick="ChatView.createNewChat()" title="New Conversation">
+                    <i class="fas fa-comment-medical"></i>
+                  </button>
+                </div>
               </div>
               <div class="search-box">
                 <i class="fas fa-search"></i>
@@ -69,7 +74,12 @@ const ChatView = {
   },
 
   renderConversationsList() {
-    return AppStore.conversations.map(conv => {
+    // Filter conversations based on archive view
+    const filteredConversations = this.showArchived ? 
+      AppStore.conversations.filter(conv => !conv.isActive) : 
+      AppStore.conversations.filter(conv => conv.isActive !== false);
+    
+    return filteredConversations.map(conv => {
       // Determine avatar style based on ownership
       let avatarClass, avatarContent, ownerTooltip;
       
@@ -95,15 +105,19 @@ const ChatView = {
       }
 
       return `
-        <div class="conversation-item ${conv.id === AppStore.selectedConversationId ? 'active' : ''}" 
+        <div class="conversation-item ${conv.id === AppStore.selectedConversationId ? 'active' : ''} ${conv.isActive === false ? 'archived' : ''}" 
              onclick="ChatView.selectConversation(${conv.id})">
           <div class="d-flex align-items-center">
+            ${conv.isActive === false ? '<div class="archive-indicator" title="Archived"><i class="fas fa-archive"></i></div>' : ''}
             <div class="conversation-avatar ${avatarClass}" title="${ownerTooltip}">
               ${avatarContent}
             </div>
             <div class="conversation-info">
               <div class="conversation-header">
-                <div class="conversation-name">${conv.name}</div>
+                <div class="conversation-name">
+                  ${conv.name}
+                  ${conv.isActive === false ? '<span class="archived-label">Archived</span>' : ''}
+                </div>
                 <div class="conversation-time">${conv.lastActivity}</div>
               </div>
               <div class="conversation-preview">${conv.lastMessage}</div>
@@ -586,7 +600,31 @@ const ChatView = {
       'Are you sure you want to close this chat? It will be archived.',
       'fas fa-archive text-warning',
       () => {
-        this.showToast('Chat closed and archived', 'success');
+        const conversation = AppStore.getConversationById(AppStore.selectedConversationId);
+        if (conversation) {
+          conversation.isActive = false;
+          
+          // Add system message about archiving
+          AppStore.addMessage(AppStore.selectedConversationId, {
+            id: Date.now(),
+            conversationId: AppStore.selectedConversationId,
+            senderId: 'system',
+            sender: 'System',
+            senderInitials: 'SYS',
+            avatarClass: 'avatar-system',
+            content: 'Conversation has been archived',
+            time: "just now",
+            timestamp: new Date(),
+            isOwn: false,
+            isSystem: true,
+            status: "delivered"
+          });
+          
+          // Re-render to update conversation list
+          App.render();
+          
+          this.showToast('Chat closed and archived', 'success');
+        }
       }
     );
   },
@@ -732,7 +770,13 @@ const ChatView = {
 
   filterConversations() {
     const searchTerm = document.getElementById('conversationSearch').value.toLowerCase();
-    const filtered = AppStore.conversations.filter(conv => 
+    
+    // Apply archive filter first, then search filter
+    let baseConversations = this.showArchived ? 
+      AppStore.conversations.filter(conv => !conv.isActive) : 
+      AppStore.conversations.filter(conv => conv.isActive !== false);
+    
+    const filtered = baseConversations.filter(conv => 
       conv.name.toLowerCase().includes(searchTerm) ||
       conv.lastMessage.toLowerCase().includes(searchTerm)
     );
@@ -763,15 +807,19 @@ const ChatView = {
       }
 
       return `
-        <div class="conversation-item ${conv.id === AppStore.selectedConversationId ? 'active' : ''}" 
+        <div class="conversation-item ${conv.id === AppStore.selectedConversationId ? 'active' : ''} ${conv.isActive === false ? 'archived' : ''}" 
              onclick="ChatView.selectConversation(${conv.id})">
           <div class="d-flex align-items-center">
+            ${conv.isActive === false ? '<div class="archive-indicator" title="Archived"><i class="fas fa-archive"></i></div>' : ''}
             <div class="conversation-avatar ${avatarClass}" title="${ownerTooltip}">
               ${avatarContent}
             </div>
             <div class="conversation-info">
               <div class="conversation-header">
-                <div class="conversation-name">${conv.name}</div>
+                <div class="conversation-name">
+                  ${conv.name}
+                  ${conv.isActive === false ? '<span class="archived-label">Archived</span>' : ''}
+                </div>
                 <div class="conversation-time">${conv.lastActivity}</div>
               </div>
               <div class="conversation-preview">${conv.lastMessage}</div>
@@ -792,7 +840,33 @@ const ChatView = {
     }, 100);
   },
 
+  toggleArchivedView() {
+    this.showArchived = !this.showArchived;
+    
+    // Update the conversations list
+    const conversationsList = document.getElementById('conversationsList');
+    if (conversationsList) {
+      conversationsList.innerHTML = this.renderConversationsList();
+    }
+    
+    // Update toggle button
+    const toggleBtn = document.querySelector('.archive-toggle-btn');
+    if (toggleBtn) {
+      toggleBtn.classList.toggle('active', this.showArchived);
+      toggleBtn.title = this.showArchived ? 'Hide Archived' : 'Show Archived';
+    }
+    
+    // Clear search when toggling
+    const searchInput = document.getElementById('conversationSearch');
+    if (searchInput) {
+      searchInput.value = '';
+    }
+  },
+
   init() {
+    // Initialize archive view state
+    this.showArchived = false;
+    
     // Close chat menu when clicking outside
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.chat-management')) {

@@ -156,7 +156,7 @@ const AppStore = {
       ownerId: 'loan_officers',
       ownerType: 'group',
       ownerName: 'Loan Officers',
-      isActive: false
+      isActive: true
     },
     {
       id: 401,
@@ -188,7 +188,7 @@ const AppStore = {
       hasNewMessages: true,
       unreadCount: 2,
       ownerId: 100,
-      isActive: false
+      isActive: true
     }
   ],
 

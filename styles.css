@@ -997,6 +997,71 @@ body {
   border-bottom: none;
 }
 
+/* Archive Toggle Button */
+.archive-toggle-btn {
+  background: none;
+  border: none;
+  color: var(--gray);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0;
+  border-radius: 50%;
+  transition: all 0.2s;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.archive-toggle-btn:hover {
+  background: var(--light-gray);
+  color: var(--primary-blue);
+}
+
+.archive-toggle-btn.active {
+  background: var(--primary-blue);
+  color: white;
+}
+
+.archive-toggle-btn.active:hover {
+  background: var(--light-blue);
+}
+
+/* Archive Visual Indicators */
+.archive-indicator {
+  width: 20px;
+  height: 20px;
+  color: var(--gray);
+  margin-right: 8px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.archived-label {
+  background: var(--gray);
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 8px;
+  font-weight: normal;
+}
+
+.conversation-item.archived {
+  opacity: 0.7;
+}
+
+.conversation-item.archived .conversation-name {
+  color: var(--gray);
+}
+
+.conversation-item.archived:hover {
+  opacity: 1;
+}
+
 /* Add Participants Modal Styles */
 .internal-user-item, .group-item {
   cursor: pointer;
