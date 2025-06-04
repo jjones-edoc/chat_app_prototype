@@ -10,7 +10,6 @@
 - [Standalone Chat Application Overview](#standalone-chat-application-overview)
 - [Chat Management Menu (Owner-Only Controls)](#chat-management-menu-owner-only-controls)
 - [Menu Options for Chats Not Associated with a Package](#menu-options-for-chats-not-associated-with-a-package)
-- [Date Filter for Chat Conversations](#date-filter-for-chat-conversations)
 - [Adding Users or Groups to Chat](#adding-users-or-groups-to-chat)
 - [Notification of New Participants](#notification-of-new-participants)
 - [Message Features](#message-features)
@@ -100,12 +99,6 @@ Within the standalone chat application, chat owners have access to a menu that p
 
 _[Image: Screenshot showing the chat management menu with owner-only controls]_
 
-## Date Filter for Chat Conversations
-
-The date filter, located at the top right corner of the chat interface, provides users with an easy way to organize and view conversations based on specific timeframes. Users can filter chats according to a custom date range or select from predefined options such as the Last 30 Days, Last 7 Days, or Today.
-
-_[Image: Screenshot showing the date filter dropdown in the chat interface]_
-
 ## Adding Users or Groups to Chat
 
 When the chat owner clicks on "Add User", a pop-up window appears displaying a search bar along with a list of available internal users and groups. The owner can use the search functionality to quickly find specific participants, and then select one or more users or groups to add to the conversation.
@@ -148,7 +141,7 @@ The eDOC Chat Platform offers a comprehensive set of messaging features designed
 
 ## Attaching a Chat to a Package
 
-If a chat is not already linked to a document package, the chat owner has the option to associate it with one. They can either select an existing package from a list or choose to create a new one. By clicking the "Create New Package" button, the owner is redirected to the eDocSignature interface, where they can quickly set up a new package. Once created, the package can be linked back to the chat.
+If a chat is not already linked to a document package, the chat owner has the option to associate it with one by selecting an existing package from a list. If they need to create a new package, they will need to do so in the eDocSignature system first.
 
 _[Image: Screenshot showing the interface for attaching a chat to a package]_
 
